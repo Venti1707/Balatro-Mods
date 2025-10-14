@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'e5203c6a00a0e0e5583e3a092c4067e1df11a57c13aa1f37b3aaba8fa7bb1d54'
+LOVELY_INTEGRITY = 'c8c61312f915c2e19ddf51c63a34f36a8c48998c03ca977c957588868ce1ff44'
 
 ---@class Controller
 Controller = Object:extend()
@@ -422,6 +422,8 @@ function Controller:update(dt)
     elseif self.hovering.prev_target then
         self.hovering.prev_target:stop_hover()
     end
+    if self.hovering.prev_target and self.hovering.prev_target.role and self.hovering.prev_target.role.major and self.hovering.prev_target.role.major.params and self.hovering.prev_target.role.major.params.stake_chip and self.hovering.target ~= self.hovering.prev_target then self.hovering.prev_target.role.major:stop_hover() end
+    if self.hovering.target and self.hovering.target.role and self.hovering.target.role.major and self.hovering.target.role.major.params and self.hovering.target.role.major.params.stake_chip and self.hovering.target ~= self.hovering.prev_target then self.hovering.target.role.major:hover() end
     if self.hovering.target and self.hovering.target == self.dragging.target and not self.HID.touch then
         self.hovering.target:stop_hover()
     end
@@ -890,7 +892,8 @@ function Controller:key_press_update(key, dt)
         end
         if key == 'b' then
             G:delete_run()
-            G:start_run({})
+            Galdur.prepare_run_setup()
+            G.FUNCS.start_run(nil, Galdur.run_setup.choices)
         end
         if key == 'l' then
             G:delete_run()

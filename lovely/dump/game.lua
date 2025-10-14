@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'eded5dcfc22ee1be6ce6eb561ed601c3c2acd2aecce51ced242e71bf36ee738c'
+LOVELY_INTEGRITY = 'f73e9e0092b31b757c50c3b62953406c700dd51a05271b1336c9543377e6384e'
 
 --Class
 Game = Object:extend()
@@ -2056,7 +2056,7 @@ function Game:start_run(args)
     if not saveTable then ease_background_colour_blind(G.STATE, 'Small Blind')
     else ease_background_colour_blind(G.STATE, saveTable.BLIND.name:gsub("%s+", "") ~= '' and saveTable.BLIND.name or 'Small Blind') end
 
-    local selected_back = saveTable and saveTable.BACK.name or (args.challenge and args.challenge.deck and args.challenge.deck.type) or (self.GAME.viewed_back and self.GAME.viewed_back.name) or self.GAME.selected_back and self.GAME.selected_back.name or 'Red Deck'
+    local selected_back = saveTable and saveTable.BACK.name or (args.challenge and args.challenge.deck and args.challenge.deck.type) or (args.deck and args.deck.name) or (self.GAME.viewed_back and self.GAME.viewed_back.name) or self.GAME.selected_back and self.GAME.selected_back.name or 'Red Deck'
     selected_back = get_deck_from_name(selected_back)
     self.GAME = saveTable and saveTable.GAME or self:init_game_object()
     if Talisman and Talisman.igo then self.GAME = Talisman.igo(self.GAME) end

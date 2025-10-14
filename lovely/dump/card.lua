@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '2125840d882d1e0c92993b96a59058d6dfb4395293899a21eb27b210648433ca'
+LOVELY_INTEGRITY = 'd492ddce642ebf6f8c70a07845a9afbe9a574c502ea2e15701058b102190b2fe'
 
 --class
 Card = Moveable:extend()
@@ -4859,7 +4859,19 @@ function Card:draw(layer)
             end
 
             if self.area and self.area.config.type == 'deck' then
-                self.children.back:draw(overlay)
+                if self.params.stake_chip then
+                    if self.params.stake_chip_locked then 
+                        self.children.back:draw(G.C.L_BLACK)
+                    elseif self.params.chip_tower then
+                        self.children.back:draw(G.C.WHITE)
+                    elseif not self.children.back.won then
+                        self.children.back:draw(Galdur.config.stake_colour == 1 and G.C.L_BLACK or G.C.WHITE)
+                    else
+                        self.children.back:draw(Galdur.config.stake_colour == 1 and G.C.WHITE or G.C.L_BLACK)
+                    end
+                else
+                    self.children.back:draw(overlay)
+                end
             else
                 self.children.back:draw_shader('dissolve')
             end

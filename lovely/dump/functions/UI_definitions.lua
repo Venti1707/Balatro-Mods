@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'b8a3d3060e399ebf6b95296f8c35b756719765cdacd47a1170704a37a2653370'
+LOVELY_INTEGRITY = 'ed267872c9f1ed1986d136bc8cb8f16a2f158ea782b1600deba252a3bc1628a0'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -5724,8 +5724,9 @@ function G.UIDEF.run_setup(from_game_over)
             {
                 label = localize('b_new_run'),
                 chosen = (not _challenge_chosen) and (not _can_continue),
-                tab_definition_function = G.UIDEF.run_setup_option,
+                tab_definition_function = (Galdur.config.use and G.UIDEF.run_setup_option_new_model or G.UIDEF.run_setup_option),
                 tab_definition_function_args = 'New Run'
+                
             },
             G.STAGE == G.STAGES.MAIN_MENU and {
                 label = localize('b_continue'),
