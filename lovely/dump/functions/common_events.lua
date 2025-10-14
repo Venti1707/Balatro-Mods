@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '62be7d02332aa2b9203483544781407602a97b27dd1075471fbdd3f038194fec'
+LOVELY_INTEGRITY = 'ddfdb56b838618f9a944caeb630b9952b8072c1618169d23f95045265976675d'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -73,7 +73,7 @@ function ease_dollars(mod, instant)
         mod = mod or 0
         local text = '+'..localize('$')
         local col = G.C.MONEY
-        if mod < 0 then
+        if to_big(mod) < to_big(0) then
             text = '-'..localize('$')
             col = G.C.RED              
         else
@@ -118,7 +118,7 @@ function ease_discard(mod, instant, silent)
         mod = math.max(-G.GAME.current_round.discards_left, mod)
         local text = '+'
         local col = G.C.GREEN
-        if mod < 0 then
+        if to_big(mod) < to_big(0) then
             text = ''
             col = G.C.RED
         end
@@ -157,7 +157,7 @@ function ease_hands_played(mod, instant)
         mod = mod or 0
         local text = '+'
         local col = G.C.GREEN
-        if mod < 0 then
+        if to_big(mod) < to_big(0) then
             text = ''
             col = G.C.RED
         end
@@ -198,11 +198,12 @@ function ease_ante(mod)
           mod = mod or 0
           local text = '+'
           local col = G.C.IMPORTANT
-          if mod < 0 then
+          if to_big(mod) < to_big(0) then
               text = '-'
               col = G.C.RED
           end
           G.GAME.round_resets.ante = G.GAME.round_resets.ante + mod
+          G.GAME.round_resets.ante_disp = number_format(G.GAME.round_resets.ante)
           check_and_set_high_score('furthest_ante', G.GAME.round_resets.ante)
           ante_UI.config.object:update()
           G.HUD:recalculate()
@@ -231,7 +232,7 @@ function ease_round(mod)
           mod = mod or 0
           local text = '+'
           local col = G.C.IMPORTANT
-          if mod < 0 then
+          if to_big(mod) < to_big(0) then
               text = ''
               col = G.C.RED
           end
@@ -478,21 +479,21 @@ function level_up_hand(card, hand, instant, amount)
     for name, parameter in pairs(SMODS.Scoring_Parameters) do
         if G.GAME.hands[hand][name] then parameter:level_up_hand(amount, G.GAME.hands[hand]) end
     end
-    if not instant then 
+    if not instant and not Talisman.config_file.disable_anims then
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2, func = function()
             play_sound('tarot1')
-            if card then card:juice_up(0.8, 0.5) end
+            if card and card.juice_up then card:juice_up(0.8, 0.5) end
             G.TAROT_INTERRUPT_PULSE = true
             return true end }))
         update_hand_text({delay = 0}, {mult = G.GAME.hands[hand].mult, StatusText = true})
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.9, func = function()
             play_sound('tarot1')
-            if card then card:juice_up(0.8, 0.5) end
+            if card and card.juice_up then card:juice_up(0.8, 0.5) end
             return true end }))
         update_hand_text({delay = 0}, {chips = G.GAME.hands[hand].chips, StatusText = true})
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.9, func = function()
             play_sound('tarot1')
-            if card then card:juice_up(0.8, 0.5) end
+            if card and card.juice_up then card:juice_up(0.8, 0.5) end
             G.TAROT_INTERRUPT_PULSE = nil
             return true end }))
         update_hand_text({sound = 'button', volume = 0.7, pitch = 0.9, delay = 0}, {level=G.GAME.hands[hand].level})
@@ -512,10 +513,10 @@ function update_hand_text(config, vals)
     func = function()
         local col = G.C.GREEN
         if vals.chips and G.GAME.current_round.current_hand.chips ~= vals.chips then
-            local delta = (type(vals.chips) == 'number' and type(G.GAME.current_round.current_hand.chips) == 'number') and (vals.chips - G.GAME.current_round.current_hand.chips) or 0
-            if delta < 0 then delta = ''..delta; col = G.C.RED
-            elseif delta > 0 then delta = '+'..delta
-            else delta = ''..delta
+            local delta = (is_number(vals.chips) and is_number(G.GAME.current_round.current_hand.chips)) and (vals.chips - G.GAME.current_round.current_hand.chips) or 0
+            if to_big(delta) < to_big(0) then delta = number_format(delta); col = G.C.RED
+            elseif to_big(delta) > to_big(0) then delta = '+'..number_format(delta)
+            else delta = number_format(delta)
             end
             if type(vals.chips) == 'string' then delta = vals.chips end
             G.GAME.current_round.current_hand.chips = vals.chips
@@ -534,10 +535,10 @@ function update_hand_text(config, vals)
             end
         end
         if vals.mult and G.GAME.current_round.current_hand.mult ~= vals.mult then
-            local delta = (type(vals.mult) == 'number' and type(G.GAME.current_round.current_hand.mult) == 'number')and (vals.mult - G.GAME.current_round.current_hand.mult) or 0
-            if delta < 0 then delta = ''..delta; col = G.C.RED
-            elseif delta > 0 then delta = '+'..delta
-            else delta = ''..delta
+            local delta = (is_number(vals.mult) and is_number(G.GAME.current_round.current_hand.mult))and (vals.mult - G.GAME.current_round.current_hand.mult) or 0
+            if to_big(delta) < to_big(0) then delta = number_format(delta); col = G.C.RED
+            elseif to_big(delta) > to_big(0) then delta = '+'..number_format(delta)
+            else delta = number_format(delta)
             end
             if type(vals.mult) == 'string' then delta = vals.mult end
             G.GAME.current_round.current_hand.mult = vals.mult
@@ -559,9 +560,9 @@ function update_hand_text(config, vals)
         for name, parameter in pairs(SMODS.Scoring_Parameters) do
             if vals[name] and G.GAME.current_round.current_hand[name] ~= vals[name] then
                 local delta = (type(vals[name]) == 'number' and type(G.GAME.current_round.current_hand[name]) == 'number') and (vals[name] - G.GAME.current_round.current_hand[name]) or 0
-                if delta < 0 then delta = ''..delta; col = G.C.RED
-                elseif delta > 0 then delta = '+'..delta
-                else delta = ''..delta
+                if to_big(delta) < to_big(0) then delta = number_format(delta); col = G.C.RED
+                elseif to_big(delta) > to_big(0) then delta = '+'..number_format(delta)
+                else delta = number_format(delta)
                 end
                 if type(vals[name]) == 'string' then delta = vals[name] end
                 G.GAME.current_round.current_hand[name] = vals[name]
@@ -595,8 +596,8 @@ function update_hand_text(config, vals)
                 G.GAME.current_round.current_hand.hand_level = vals.level
             else
                 G.GAME.current_round.current_hand.hand_level = ' '..localize('k_lvl')..tostring(vals.level)
-                if type(vals.level) == 'number' then 
-                    G.hand_text_area.hand_level.config.colour = G.C.HAND_LEVELS[math.min(vals.level, 7)]
+                if is_number(vals.level) then
+                    G.hand_text_area.hand_level.config.colour = G.C.HAND_LEVELS[math.floor(to_number(math.min(vals.level, 7)))]
                 else
                     G.hand_text_area.hand_level.config.colour = G.C.HAND_LEVELS[1]
                 end
@@ -684,6 +685,50 @@ function eval_card(card, context)
             ret.playing_card.x_mult = x_mult
         end
     
+        local x_chips = card:get_chip_x_bonus()
+        if x_chips > 0 then
+        	ret.x_chips = x_chips
+        end
+        
+        local e_chips = card:get_chip_e_bonus()
+        if e_chips > 0 then
+        	ret.e_chips = e_chips
+        end
+        
+        local ee_chips = card:get_chip_ee_bonus()
+        if ee_chips > 0 then
+        	ret.ee_chips = ee_chips
+        end
+        
+        local eee_chips = card:get_chip_eee_bonus()
+        if eee_chips > 0 then
+        	ret.eee_chips = eee_chips
+        end
+        
+        local hyper_chips = card:get_chip_hyper_bonus()
+        if type(hyper_chips) == 'table' and hyper_chips[1] > 0 and hyper_chips[2] > 0 then
+        	ret.hyper_chips = hyper_chips
+        end
+        
+        local e_mult = card:get_chip_e_mult()
+        if e_mult > 0 then
+        	ret.e_mult = e_mult
+        end
+        
+        local ee_mult = card:get_chip_ee_mult()
+        if ee_mult > 0 then
+        	ret.ee_mult = ee_mult
+        end
+        
+        local eee_mult = card:get_chip_eee_mult()
+        if eee_mult > 0 then
+        	ret.eee_mult = eee_mult
+        end
+        
+        local hyper_mult = card:get_chip_hyper_mult()
+        if type(hyper_mult) == 'table' and hyper_mult[1] > 0 and hyper_mult[2] > 0 then
+        	ret.hyper_mult = hyper_mult
+        end
         local p_dollars = card:get_p_dollars()
         if p_dollars ~= 0 then
             ret.playing_card.p_dollars = p_dollars
@@ -953,12 +998,12 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
         sound = 'chips1'
         amt = amt
         colour = G.C.CHIPS
-        text = localize{type='variable',key='a_chips'..(amt<0 and '_minus' or ''),vars={math.abs(amt)}}
+        text = localize{type='variable',key='a_chips'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
         delay = 0.6
     elseif eval_type == 'mult' then 
         sound = 'multhit1'--'other1'
         amt = amt
-        text = localize{type='variable',key='a_mult'..(amt<0 and '_minus' or ''),vars={math.abs(amt)}}
+        text = localize{type='variable',key='a_mult'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
         colour = G.C.MULT
         config.type = 'fade'
         config.scale = 0.7
@@ -966,7 +1011,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
             sound = 'xchips'
             volume = 0.7
             amt = amt
-            text = localize{type='variable',key='a_xchips'..(amt<0 and '_minus' or ''),vars={math.abs(amt)}}
+            text = localize{type='variable',key='a_xchips'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
             colour = G.C.BLUE
             config.type = 'fade'
             config.scale = 0.7
@@ -974,17 +1019,80 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
         sound = 'multhit2'
         volume = 0.7
         amt = amt
-        text = localize{type='variable',key='a_xmult'..(amt<0 and '_minus' or ''),vars={math.abs(amt)}}
+        text = localize{type='variable',key='a_xmult'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
         colour = G.C.XMULT
         config.type = 'fade'
         config.scale = 0.7
     elseif eval_type == 'h_mult' then 
         sound = 'multhit1'
         amt = amt
-        text = localize{type='variable',key='a_mult'..(amt<0 and '_minus' or ''),vars={math.abs(amt)}}
+        text = localize{type='variable',key='a_mult'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
         colour = G.C.MULT
         config.type = 'fade'
         config.scale = 0.7
+    elseif eval_type == 'x_chips' then 
+    	sound = 'talisman_xchip'
+    	amt = amt
+    	text = 'X' .. amt
+    	colour = G.C.CHIPS
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'e_chips' then 
+    	sound = 'talisman_echip'
+    	amt = amt
+    	text = '^' .. amt
+    	colour = G.C.CHIPS
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'ee_chips' then 
+    	sound = 'talisman_eechip'
+    	amt = amt
+    	text = '^^' .. amt
+    	colour = G.C.CHIPS
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'eee_chips' then 
+    	sound = 'talisman_eeechip'
+    	amt = amt
+    	text = '^^^' .. amt
+    	colour = G.C.CHIPS
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'hyper_chips' then
+    	sound = 'talisman_eeechip'
+    	text = (amt[1] > 5 and ('{' .. tostring(amt[1]) .. '}') or string.rep('^', amt[1])) .. tostring(amt[2])
+    	amt = amt[2]
+    	colour = G.C.CHIPS
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'e_mult' then 
+    	sound = 'talisman_emult'
+    	amt = amt
+    	text = '^' .. amt .. ' ' .. localize('k_mult')
+    	colour = G.C.MULT
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'ee_mult' then 
+    	sound = 'talisman_eemult'
+    	amt = amt
+    	text = '^^' .. amt .. ' ' .. localize('k_mult')
+    	colour = G.C.MULT
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'eee_mult' then 
+    	sound = 'talisman_eeemult'
+    	amt = amt
+    	text = '^^^' .. amt .. ' ' .. localize('k_mult')
+    	colour = G.C.MULT
+    	config.type = 'fade'
+    	config.scale = 0.7
+    elseif eval_type == 'hyper_mult' then 
+    	sound = 'talisman_eeemult'
+    	text = (amt[1] > 5 and ('{' .. tostring(amt[1]) .. '}') or string.rep('^', amt[1])) .. tostring(amt[2]) .. ' ' .. localize('k_mult')
+    	amt = amt[2]
+    	colour = G.C.MULT
+    	config.type = 'fade'
+    	config.scale = 0.7
     elseif eval_type == 'dollars' then 
         sound = 'coin3'
         amt = amt
@@ -996,7 +1104,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
         text = localize('k_swapped_ex')
         colour = G.C.PURPLE
     elseif eval_type == 'extra' or eval_type == 'jokers' then 
-        sound = extra.edition and 'foil2' or extra.mult_mod and 'multhit1' or extra.Xmult_mod and 'multhit2' or 'generic1'
+        sound = extra.edition and 'foil2' or extra.mult_mod and 'multhit1' or extra.Xmult_mod and 'multhit2' or extra.Xchip_mod and 'talisman_xchip' or extra.Echip_mod and 'talisman_echip' or extra.Emult_mod and 'talisman_emult' or extra.EEchip_mod and 'talisman_eechip' or extra.EEmult_mod and 'talisman_eemult' or (extra.EEEchip_mod or extra.hyperchip_mod) and 'talisman_eeechip' or (extra.EEEmult_mod or extra.hypermult_mod) and 'talisman_eeemult' or 'generic1'
         if extra.edition then 
             colour = G.C.DARK_EDITION
         end
@@ -1028,7 +1136,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
     end
     delay = delay*1.25
 
-    if amt > 0 or amt < 0 then
+    if to_big(amt) > to_big(0) or to_big(amt) < to_big(0) then
         if extra and extra.instant then
             if extrafunc then extrafunc() end
             attention_text({
@@ -1042,7 +1150,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
             })
             play_sound(sound, 0.8+percent*0.2, volume)
             if not extra or not extra.no_juice then
-                card:juice_up(0.6, 0.1)
+                if card and card.juice_up then card:juice_up(0.6, 0.1) end
                 G.ROOM.jiggle = G.ROOM.jiggle + 0.7
             end
         else
@@ -1064,7 +1172,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
                     })
                     play_sound(sound, 0.8+percent*0.2, volume)
                     if not extra or not extra.no_juice then
-                        card:juice_up(0.6, 0.1)
+                        if card and card.juice_up then card:juice_up(0.6, 0.1) end
                         G.ROOM.jiggle = G.ROOM.jiggle + 0.7
                     end
                     return true
@@ -1180,7 +1288,7 @@ function add_round_eval_row(config)
             end
         }))
         local dollar_row = 0
-        if num_dollars > 60 or num_dollars < -60 then
+        num_dollars = to_number(num_dollars); if math.abs(to_number(num_dollars)) > 60 then
             if num_dollars < 0 then --if negative
                 G.E_MANAGER:add_event(Event({
                     trigger = 'before',delay = 0.38,
@@ -1283,7 +1391,7 @@ function change_shop_size(mod)
     if not G.GAME.shop then return end
     G.GAME.shop.joker_max = G.GAME.shop.joker_max + mod
     if G.shop_jokers and G.shop_jokers.cards then
-        if mod < 0 then
+        if to_big(mod) < to_big(0) then
             --Remove jokers in shop
             for i = #G.shop_jokers.cards, G.GAME.shop.joker_max+1, -1 do
                 if G.shop_jokers.cards[i] then
@@ -1305,7 +1413,7 @@ end
 function juice_card(card)
     G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
-        func = (function() card:juice_up(0.7);return true end)
+        func = (function() if card and card.juice_up then card:juice_up(0.7) end;return true end)
     }))
 end
 
@@ -1341,7 +1449,7 @@ end
 function juice_card_until(card, eval_func, first, delay)
     G.E_MANAGER:add_event(Event({
         trigger = 'after',delay = delay or 0.1, blocking = false, blockable = false, timer = 'REAL',
-        func = (function() if eval_func(card) then if not first or first then card:juice_up(0.1, 0.1) end;juice_card_until(card, eval_func, nil, 0.8) end return true end)
+        func = (function() if eval_func(card) then if card and card.juice_up then card:juice_up(0.1, 0.1) end;juice_card_until(card, eval_func, nil, 0.8) end return true end)
     }))
 end
 
@@ -1415,7 +1523,7 @@ function check_for_unlock(args)
         end
     end
     if args.type == 'money' then
-        if G.GAME.dollars >= 400 then
+        if to_big(G.GAME.dollars) >= to_big(400) then
             unlock_achievement('nest_egg')
         end
     end
@@ -1452,18 +1560,18 @@ function check_for_unlock(args)
         end
     end
     if args.type == 'upgrade_hand' then
-        if args.level >= 10 then
+        if to_big(args.level) >= to_big(10) then
             unlock_achievement('retrograde')
         end
     end
     if args.type == 'chip_score' then
-        if args.chips >= 10000 then
+        if to_big(args.chips) >= to_big(10000) then
             unlock_achievement('_10k')
         end
-        if args.chips >= 1000000 then
+        if to_big(args.chips) >= to_big(1000000) then
             unlock_achievement('_1000k')
         end
-        if args.chips >= 100000000 then
+        if to_big(args.chips) >= to_big(100000000) then
             unlock_achievement('_100000k')
         end
     end
@@ -1689,7 +1797,7 @@ function check_for_unlock(args)
                 end
             end
             if args.type == 'money' then
-                if card.unlock_condition.extra <= G.GAME.dollars then
+                if to_big(card.unlock_condition.extra) <= to_big(G.GAME.dollars) then
                     ret = true
                     unlock_card(card)   
                 end
@@ -1800,7 +1908,7 @@ function check_for_unlock(args)
                 end
             end
             if args.type == 'chip_score' then
-                if card.unlock_condition.chips <= args.chips then
+                if to_big(card.unlock_condition.chips) <= to_big(args.chips) then
                     ret = true
                     G.E_MANAGER:add_event(Event({
                         func = function()
@@ -3016,7 +3124,7 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
     elseif _c.set == 'Planet' then
         loc_vars = {
             G.GAME.hands[cfg.hand_type].level,localize(cfg.hand_type, 'poker_hands'), G.GAME.hands[cfg.hand_type].l_mult, G.GAME.hands[cfg.hand_type].l_chips,
-            colours = {(G.GAME.hands[cfg.hand_type].level==1 and G.C.UI.TEXT_DARK or G.C.HAND_LEVELS[math.min(7, G.GAME.hands[cfg.hand_type].level)])}
+            colours = {(to_big(G.GAME.hands[cfg.hand_type].level)==to_big(1) and G.C.UI.TEXT_DARK or G.C.HAND_LEVELS[math.floor(to_number(math.min(7, G.GAME.hands[cfg.hand_type].level)))])}
         }
         localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
     elseif _c.set == 'Blind' then

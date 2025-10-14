@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f13aa2f8306d151b5bdfd69c9b0eb2d10764a405ad5e7e3d5af57e9961f6f7af'
+LOVELY_INTEGRITY = '393c916494b504d48c6cac0bf8c5da8cdd0c828cdb30b36508fb43271409daaf'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -799,15 +799,15 @@ function modulate_sound(dt)
   --For ambient sound control
   G.SETTINGS.ambient_control = G.SETTINGS.ambient_control or {}
   G.ARGS.score_intensity = G.ARGS.score_intensity or {}
-  if type(G.GAME.current_round.current_hand.chips) ~= 'number' or type(G.GAME.current_round.current_hand.mult) ~= 'number' then
+  if not is_number(G.GAME.current_round.current_hand.chips) or not is_number(G.GAME.current_round.current_hand.mult) then
     G.ARGS.score_intensity.earned_score = 0
   else
-    G.ARGS.score_intensity.earned_score = SMODS.calculate_round_score(true)
+    G.ARGS.score_intensity.earned_score = math.min(to_number(SMODS.calculate_round_score(true)), 1e300)
   end
   G.ARGS.score_intensity.required_score = G.GAME.blind and G.GAME.blind.chips or 0
   G.ARGS.score_intensity.flames = math.min(1, (G.STAGE == G.STAGES.RUN and 1 or 0)*(
     (G.ARGS.chip_flames and (G.ARGS.chip_flames.real_intensity + G.ARGS.chip_flames.change) or 0))/10)
-  G.ARGS.score_intensity.organ = G.video_organ or G.ARGS.score_intensity.required_score > 0 and math.max(math.min(0.4, 0.1*math.log(G.ARGS.score_intensity.earned_score/(G.ARGS.score_intensity.required_score+1), 5)),0.) or 0
+  G.ARGS.score_intensity.organ = G.video_organ or to_big(G.ARGS.score_intensity.required_score) > to_big(0) and math.max(math.min(0.4, 0.1*math.log(G.ARGS.score_intensity.earned_score/(G.ARGS.score_intensity.required_score+1), 5)),0.) or 0
 
   local AC = G.SETTINGS.ambient_control
   G.ARGS.ambient_sounds = G.ARGS.ambient_sounds or {
@@ -821,6 +821,20 @@ function modulate_sound(dt)
     AC[k] = AC[k] or {}
     AC[k].per = (k == 'ambientOrgan1') and 0.7 or (k == 'ambientFire1' and 1.1) or (k == 'ambientFire2' and 1.05) or 1
     AC[k].vol = Cartomancer.handle_flames_volume((not G.video_organ and G.STATE == G.STATES.SPLASH) and 0 or AC[k].vol and v.volfunc(AC[k].vol) or 0)
+    if type(AC[k].vol) == "table" then
+    	if AC[k].vol > to_big(1e300) then
+    		AC[k].vol = 1e300
+    	else
+    		AC[k].vol = to_number(AC[k].vol)
+    	end
+    end
+    if type(AC[k].per) == "table" then
+    	if AC[k].per > to_big(1e300) then
+    		AC[k].per = 1e300
+    	else
+    		AC[k].per = to_number(AC[k].per)
+    	end
+    end
   end
 
   G.ARGS.push = G.ARGS.push or {}
@@ -888,6 +902,10 @@ function count_of_suit(area, suit)
 end
 
 function prep_draw(moveable, scale, rotate, offset)
+if Big and G.STATE == G.STATES.MENU then moveable.VT.x = to_number(moveable.VT.x)
+moveable.VT.y = to_number(moveable.VT.y)
+moveable.VT.w = to_number(moveable.VT.w)
+moveable.VT.h = to_number(moveable.VT.h) end
     love.graphics.push()
     love.graphics.scale(G.TILESCALE*G.TILESIZE)
     love.graphics.translate(
@@ -1139,7 +1157,7 @@ end
 
 function check_and_set_high_score(score, amt)
   if not amt or type(amt) ~= 'number' then return end
-  if G.GAME.round_scores[score] and math.floor(amt) > G.GAME.round_scores[score].amt then
+  if G.GAME.round_scores[score] and math.floor(amt) > (G.GAME.round_scores[score].amt or 0) then
     G.GAME.round_scores[score].amt = math.floor(amt)
   end
   if  G.GAME.seeded  then return end

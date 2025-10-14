@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '3b8fca0e0e464b50ca6a24ca9cfe097334d9cf40526780afa4677c45a78e22db'
+LOVELY_INTEGRITY = '105475da32957bc0c53ec5eef217284d9d8be7548f8e75943ecc811a8a040cc6'
 
 --Class
 UIBox = Moveable:extend()
@@ -186,6 +186,10 @@ function UIBox:calculate_xywh(node, _T, recalculate, _scale)
                         if v.config and v.config.scale then v.config.scale = v.config.scale*fac end
                         _tw, _th = self:calculate_xywh(v, _ct, recalculate, fac)
                         if _th and _tw then 
+                        if Big then
+                        	_th = to_number(_th)
+                        	_tw = to_number(_tw)
+                        end
                             if v.UIT == G.UIT.R then 
                                 _ct.h = _ct.h + _th + padding
                                 _ct.y = _ct.y + _th + padding         
@@ -558,6 +562,7 @@ function UIElement:set_wh()
         for k, w in pairs(self.children) do
             if w.set_wh then 
                 local _cw, _ch = w:set_wh()
+                if Big and G.STATE == G.STATES.MENU then _cw = to_number(_cw); _ch = to_number(_ch) end
                 if _cw and _ch then
                     if _cw > _max_w then _max_w = _cw end
                     if _ch > _max_h then _max_h = _ch end
@@ -698,6 +703,7 @@ function UIElement:draw_self()
 
             if (self.config.button_UIE and button_active) or (not self.config.button_UIE and self.config.shadow and G.SETTINGS.GRAPHICS.shadows == 'On') then 
                 prep_draw(self, 0.97)
+                if Big and G.STATE == G.STATES.MENU then self.config.scale = to_number(self.config.scale) end
                 if self.config.vert then love.graphics.translate(0,self.VT.h); love.graphics.rotate(-math.pi/2) end
                 if (self.config.shadow or (self.config.button_UIE and button_active)) and G.SETTINGS.GRAPHICS.shadows == 'On' then
                     love.graphics.setColor(0, 0, 0, 0.3*self.config.colour[4])
@@ -714,6 +720,7 @@ function UIElement:draw_self()
             end
 
             prep_draw(self, 1)
+            if Big and G.STATE == G.STATES.MENU then self.config.scale = to_number(self.config.scale) end
             if self.config.vert then love.graphics.translate(0,self.VT.h); love.graphics.rotate(-math.pi/2) end
             if not button_active then
                 love.graphics.setColor(G.C.UI.TEXT_INACTIVE)
