@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'b204c829875dcd1f28686a3d1ea6a52bc233ab8d726955bef65723a2315f05c8'
+LOVELY_INTEGRITY = 'cd3602dcf7088a5b526e194af1b514a9f2149196da67fc67bbf43e270e4f018e'
 
 --Class
 Game = Object:extend()
@@ -1942,6 +1942,31 @@ function Game:init_game_object()
         inflation = 0,
         hands_played = 0,
         unused_discards = 0,
+        all_in_jest = {
+        	dizzard_shop = false,
+        	pit_blind_ante = 4,
+        },
+        jest_unused_hands = 0,
+        jest_legendary_pool = {in_shop = false, rate = 1.00},
+        jest_stored_memory_card = nil,
+        jest_change_booster_options = {op = {add = 0, mult = 0, div = 0, sub = 0}, trigger = false, option = "", pack_choices = 0}, -- both, pick, or size
+        jest_void_planet_ante = false,
+        jest_kasperle_voucher_ante = false,
+        jest_kilroy_sold = 0,
+        jest_visage_last_sold = nil,
+        jest_clay_last_destroyed = nil,
+        jest_bought_jokers = 0,
+        jest_magic_mirror_trigger = true,
+        jest_toothy_joker_tarots = 0,
+        jest_jester_zombie_trigger = false,
+        jest_omlette_appearence_eggs = 0,
+        jest_free_stultor_rerolls = 0,
+        jest_fairy_edition_rate = 1,
+        ['jest_upgrade_tab'] = false,
+        previous_jest_upgrade_tab = false,
+        jest_gold_tag_rate = 1,
+        shop_galloping_dominoed = false,
+        temp_create_card = {},
         perishable_rounds = 5,
         rental_rate = 3,
         blind =  nil,
@@ -1988,6 +2013,9 @@ function Game:init_game_object()
             dollars = 0,
             reroll_cost = 5,
             reroll_cost_increase = 0,
+            jest_magick_joker_card = {suit = 'Spades'},
+            jest_highest_scored_mult = {amount = 0, trigger = true},
+            jest_you_broke_it_card = {rank = nil, enhancement = nil, id = nil},	
             jokers_purchased = 0,
             free_rerolls = 0,
             round_dollars = 0,
@@ -2306,6 +2334,10 @@ function Game:start_run(args)
         CAI.joker_H, 
         {card_limit = self.GAME.starting_params.joker_slots, type = 'joker', highlight_limit = 1, negative_info = 'joker'})
 
+    self.jest_super_discard = CardArea(
+            0, 0,
+            CAI.discard_W,CAI.discard_H,
+            {card_limit = 1e308, type = 'discard'})
     self.discard = CardArea(
         0, 0,
         CAI.discard_W,CAI.discard_H,
@@ -2461,6 +2493,8 @@ function Game:start_run(args)
         self.GAME.current_round.ancient_card.suit = nil
         reset_ancient_card()
         reset_castle_card()        
+        reset_jest_magick_joker_card()
+        reset_jest_you_broke_it_card()
         for _, mod in ipairs(SMODS.mod_list) do
         	if mod.reset_game_globals and type(mod.reset_game_globals) == 'function' then
         		mod.reset_game_globals(true)
@@ -3297,6 +3331,9 @@ function Game:update_shop(dt)
                                         end
                                     }))
                                 end
+                                SMODS.calculate_context({
+                                    entering_shop = true,
+                                })
                                 G.CONTROLLER:snap_to({node = G.shop:get_UIE_by_ID('next_round_button')})
                                 if not nosave_shop then G.E_MANAGER:add_event(Event({ func = function() save_run(); return true end})) end
                                 return true

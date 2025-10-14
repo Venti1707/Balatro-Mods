@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '47c48dfa12922f4fce7336b9b7e15814b3cf42466702e8a13d5d18cbc82ae925'
+LOVELY_INTEGRITY = '935f3505d9850c42f84fcc7ae825051bd6e1b4acc11ab67dbbe3d3a24fbbc9e6'
 
 --- STEAMODDED CORE
 --- MODULE API
@@ -799,6 +799,39 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
     ------- API CODE GameObject.Rarity
     -------------------------------------------------------------------------------------------------
 
+    SMODS.jest_Badges = {}
+    SMODS.jest_Badge = SMODS.GameObject:extend {
+        obj_table = SMODS.jest_Badges,
+        obj_buffer = {},
+        set = 'jest_Badge',
+        required_params = {
+            'key',
+        },
+        badge_colour = HEX 'FFFFFF',
+        inject = function(self, center) 
+            if center.set ~= self.key then SMODS.insert_pool(SMODS.jest_Badges[self.key], center) end
+            if not center.pools then center.pools = {} end
+            center.pools[self.key] = true
+            G.C.jest_Badge[self.key] = self.badge_colour
+        end,
+        process_loc_text = function(self)
+            SMODS.process_loc_text(G.localization.misc.labels, "k_"..self.key:lower(), self.loc_txt, 'name')
+            SMODS.process_loc_text(G.localization.misc.dictionary, "k_"..self.key:lower(), self.loc_txt, 'name')
+        end,
+        get_badge = function(self, badge)
+            return localize("k_"..badge:lower())
+        end,
+    }
+    
+    local game_init_game_object_ref = Game.init_game_object
+    function Game:init_game_object()
+        local t = game_init_game_object_ref(self)
+        for _, v in pairs(SMODS.jest_Badges) do
+            local key = v.key:lower() .. '_mod'
+            t[key] = t[key] or 1
+        end
+        return t
+    end
     SMODS.Rarities = {}
     SMODS.Rarity = SMODS.GameObject:extend {
         obj_table = SMODS.Rarities,
@@ -853,6 +886,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
     local game_init_game_object_ref = Game.init_game_object
     function Game:init_game_object()
         local t = game_init_game_object_ref(self)
+        for _, v in pairs(SMODS.jest_Badges) do
+            self:inject(v)
+        end
         for _, v in pairs(SMODS.Rarities) do
             local key = v.key:lower() .. '_mod'
             t[key] = t[key] or 1
@@ -928,6 +964,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                     end
                     injected_rarities[v.key] = true
                 end
+            end
+            for _, v in pairs(SMODS.jest_Badges) do
+                self:inject(v)
             end
             for _, v in pairs(SMODS.Rarities) do
                 if v.pools and v.pools[self.key] and not injected_rarities[v.key] then SMODS.inject_rarity(self, v) end

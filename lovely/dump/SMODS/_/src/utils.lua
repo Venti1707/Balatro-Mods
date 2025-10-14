@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'dabff9514c53208b9430644f4126e3b35bb1cbf9ebb931ed6f073b93fd561376'
+LOVELY_INTEGRITY = '9256c2e13540c7e2e5b16f38af0e6c77a7518c4726c0d02b4e0abf024fee9065'
 
 --- STEAMODDED CORE
 --- UTILITY FUNCTIONS
@@ -1068,6 +1068,12 @@ end
 function SMODS.always_scores(card)
     for k, _ in pairs(SMODS.get_enhancements(card)) do
         if k == 'm_stone' or G.P_CENTERS[k].always_scores then return true end
+    end
+    local has_beanstalk = next(SMODS.find_card("j_aij_beanstalk"))
+    if has_beanstalk then
+        if card:get_id() == 11 then
+            return true
+        end
     end
     if (G.P_CENTERS[(card.edition or {}).key] or {}).always_scores then return true end
     if (G.P_SEALS[card.seal or {}] or {}).always_scores then return true end

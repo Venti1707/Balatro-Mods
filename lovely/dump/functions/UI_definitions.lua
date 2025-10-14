@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '2d2097d9a77be84b3e1a9dab5ce8ba4e61d77d9135a340b0efe37606755aacfb'
+LOVELY_INTEGRITY = '17ef90a7eaf15595e5cf2ec5b726941fe36998a0906e34421328f7598c6e8b51'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -1382,6 +1382,7 @@ end
 function create_UIBox_HUD_blind()
   local scale = 0.4
   local stake_sprite = get_stake_sprite(G.GAME.stake or 1, 0.5)
+  local has_blind_drawn = next(SMODS.find_card("j_aij_blind_drawn")) and type == 'Boss'
   G.GAME.blind:change_dim(1.5,1.5)
 
   return {n=G.UIT.ROOT, config={align = "cm", minw = 4.5, r = 0.1, colour = G.C.BLACK, emboss = 0.05, padding = 0.05, func = 'HUD_blind_visible', id = 'HUD_blind'}, nodes={
@@ -1424,6 +1425,51 @@ function add_tag(_tag)
   end
   
   G.GAME.tags[#G.GAME.tags+1] = _tag
+  local toto_count = #SMODS.find_card("j_aij_toto")
+  
+  if toto_count > 0 and _tag.key ~= 'tag_double' and (not _tag.config.jest_tag_duplicate_trigger) then
+      for i = 1, toto_count do
+          for i = 1, 2 do
+              G.E_MANAGER:add_event(Event({
+                  trigger = 'after',
+                  delay = 0.9,
+                  func = function()
+                      if _tag.ability and _tag.ability.orbital_hand then
+                          G.orbital_hand = _tag.ability.orbital_hand
+                      end
+                      local temptag = Tag(_tag.key)
+                      temptag.config.jest_tag_duplicate_trigger = true
+                      add_tag(temptag)
+                      G.orbital_hand = nil
+                      return true
+                  end
+              }))
+          end
+      end
+  end
+  
+  local taggart_count = #SMODS.find_card("j_aij_taggart")
+  
+  if taggart_count > 0 and _tag.key ~= 'tag_double' and (not _tag.config.jest_tag_duplicate_trigger) then
+      for i = 1, taggart_count do
+          for i = 1, 1 do
+              G.E_MANAGER:add_event(Event({
+                  trigger = 'after',
+                  delay = 0.9,
+                  func = function()
+                      if _tag.ability and _tag.ability.orbital_hand then
+                          G.orbital_hand = _tag.ability.orbital_hand
+                      end
+                      local temptag = Tag(_tag.key)
+                      temptag.config.jest_tag_duplicate_trigger = true
+                      add_tag(temptag)
+                      G.orbital_hand = nil
+                      return true
+                  end
+              }))
+          end
+      end
+  end
   if not _tag.from_load then SMODS.calculate_context({tag_added = _tag}) end
   _tag.from_load = nil
   generateTagUi()
@@ -1590,6 +1636,8 @@ function create_UIBox_blind_select()
         {n=G.UIT.R, config={align = "cm"}, nodes={
           {n=G.UIT.O, config={object = DynaText({string = localize('ph_choose_blind_2'), colours = {G.C.WHITE}, shadow = true, bump = true, scale = 0.7, pop_in = 0.5, maxw = 5, silent = true}), id = 'prompt_dynatext2'}}
         }},
+        (G.GAME.jest_free_stultor_rerolls > 0) and
+        UIBox_button({label = {localize('b_reroll_boss'), localize('$')..'0'}, button = "jest_free_reroll_boss", func = 'jest_free_reroll_boss_button'}) or
         (G.GAME.used_vouchers["v_retcon"] or G.GAME.used_vouchers["v_directors_cut"]) and
         UIBox_button({label = {localize('b_reroll_boss'), localize('$')..'10'}, button = "reroll_boss", func = 'reroll_boss_button'}) or nil
       }},
@@ -1653,6 +1701,7 @@ function create_UIBox_blind_choice(type, run_info)
     G.GAME.blind_on_deck = 'Small'
   end
   if not run_info then G.GAME.round_resets.blind_states[G.GAME.blind_on_deck] = 'Select' end
+  local has_blind_drawn = next(SMODS.find_card("j_aij_blind_drawn")) and type == 'Boss'
 
   local disabled = false
   type = type or 'Small'
@@ -1662,6 +1711,18 @@ function create_UIBox_blind_choice(type, run_info)
   }
 
   blind_choice.animation = AnimatedSprite(0,0, 1.4, 1.4, G.ANIMATION_ATLAS[blind_choice.config.atlas] or G.ANIMATION_ATLAS['blind_chips'],  blind_choice.config.pos)
+  if has_blind_drawn then
+      blind_choice.animation = AnimatedSprite(0,0, 1.4, 1.4, G.ANIMATION_ATLAS["aij_blind_drawn_replacement"] or G.ANIMATION_ATLAS['blind_chips'],  { x = 0, y = 0 })
+      if blind_choice.config.boss_colour ~= G.C.UI.TEXT_INACTIVE then
+          blind_choice.config.jesttempvaule = blind_choice.config.boss_colour
+          blind_choice.config.boss_colour = G.C.UI.TEXT_INACTIVE
+      end
+  else
+      if blind_choice.config.jesttempvaule ~= nil then
+          blind_choice.config.boss_colour = blind_choice.config.jesttempvaule
+          blind_choice.config.jesttempvaule = nil
+      end
+  end
   blind_choice.animation:define_draw_steps({
     {shader = 'dissolve', shadow_height = 0.05},
     {shader = 'dissolve'}
@@ -1728,10 +1789,19 @@ function create_UIBox_blind_choice(type, run_info)
   if G.GAME.modifiers.no_blind_reward and G.GAME.modifiers.no_blind_reward[type] then _reward = nil end
   if blind_state == 'Select' then blind_state = 'Current' end
   local blind_desc_nodes = {}
+  if has_blind_drawn then
+      for k, v in ipairs(text_table) do
+          blind_desc_nodes[#blind_desc_nodes+1] = {n=G.UIT.R, config={align = "cm", maxw = 2.8}, nodes={
+              {n=G.UIT.T, config={text = "???", scale = 0.32, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}}
+          }}
+      end
+      blind_col = G.C.UI.TEXT_INACTIVE
+  else
   for k, v in ipairs(text_table) do
     blind_desc_nodes[#blind_desc_nodes+1] = {n=G.UIT.R, config={align = "cm", maxw = 2.8}, nodes={
       {n=G.UIT.T, config={text = v or '-', scale = 0.32, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}}
     }}
+  end
   end
   local run_info_colour = run_info and (blind_state == 'Defeated' and G.C.GREY or blind_state == 'Skipped' and G.C.BLUE or blind_state == 'Upcoming' and G.C.ORANGE or blind_state == 'Current' and G.C.RED or G.C.GOLD)
   local t = 
@@ -1745,6 +1815,11 @@ function create_UIBox_blind_choice(type, run_info)
             {n=G.UIT.T, config={text = localize(blind_state, 'blind_states'), scale = 0.45, colour = G.C.UI.TEXT_LIGHT, shadow = true}}
           }}
         }},
+        has_blind_drawn and {n=G.UIT.R, config={id = 'blind_name',align = "cm", padding = 0.07}, nodes={
+            {n=G.UIT.R, config={align = "cm", r = 0.1, outline = 1, outline_colour = G.C.UI.TEXT_INACTIVE, colour = darken(G.C.UI.TEXT_INACTIVE, 0.3), minw = 2.9, emboss = 0.1, padding = 0.07, line_emboss = 1}, nodes={
+                {n=G.UIT.O, config={object = DynaText({string = "???", colours = {disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE}, shadow = not disabled, float = not disabled, y_offset = -4, scale = 0.45, maxw =2.8})}},
+            }},
+        }} or
         {n=G.UIT.R, config={id = 'blind_name',align = "cm", padding = 0.07}, nodes={
           {n=G.UIT.R, config={align = "cm", r = 0.1, outline = 1, outline_colour = blind_col, colour = darken(blind_col, 0.3), minw = 2.9, emboss = 0.1, padding = 0.07, line_emboss = 1}, nodes={
             {n=G.UIT.O, config={object = DynaText({string = loc_name, colours = {disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE}, shadow = not disabled, float = not disabled, y_offset = -4, scale = 0.45, maxw =2.8})}},
@@ -1762,11 +1837,20 @@ function create_UIBox_blind_choice(type, run_info)
               {n=G.UIT.R, config={align = "cm", maxw = 3}, nodes={
                 {n=G.UIT.T, config={text = localize('ph_blind_score_at_least'), scale = 0.3, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}}
               }},
+              has_blind_drawn and {n=G.UIT.R, config={align = "cm", minh = 0.6}, nodes={
+                  {n=G.UIT.O, config={w=0.5,h=0.5, colour = G.C.BLUE, object = stake_sprite, hover = true, can_collide = false}},
+                  {n=G.UIT.B, config={h=0.1,w=0.1}},
+                  {n=G.UIT.T, config={text = "???", scale = score_number_scale(0.9, 600), colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.RED, shadow =  not disabled}}
+              }} or
               {n=G.UIT.R, config={align = "cm", minh = 0.6}, nodes={
                 {n=G.UIT.O, config={w=0.5,h=0.5, colour = G.C.BLUE, object = stake_sprite, hover = true, can_collide = false}},
                 {n=G.UIT.B, config={h=0.1,w=0.1}},
                 {n=G.UIT.T, config={text = number_format(blind_amt), scale = score_number_scale(0.9, blind_amt), colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.RED, shadow =  not disabled}}
               }},
+              has_blind_drawn and _reward and {n=G.UIT.R, config={align = "cm"}, nodes={
+                  {n=G.UIT.T, config={text = localize('ph_blind_reward'), scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}},
+                  {n=G.UIT.T, config={text = "???+", scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.MONEY, shadow = not disabled}}
+              }} or
               _reward and {n=G.UIT.R, config={align = "cm"}, nodes={
                 {n=G.UIT.T, config={text = localize('ph_blind_reward'), scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}},
                 {n=G.UIT.T, config={text = string.rep(localize("$"), blind_choice.config.dollars)..'+', scale = 0.35, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.MONEY, shadow = not disabled}}
@@ -3227,6 +3311,18 @@ function create_UIBox_round_scores_row(score, text_colour)
     label = localize('k_defeated_by')
     local blind_choice = {config = G.GAME.blind.config.blind or G.P_BLINDS.bl_small}
     blind_choice.animation = AnimatedSprite(0,0, 1.4, 1.4, G.ANIMATION_ATLAS[blind_choice.config.atlas] or G.ANIMATION_ATLAS['blind_chips'],  blind_choice.config.pos)
+    if has_blind_drawn then
+        blind_choice.animation = AnimatedSprite(0,0, 1.4, 1.4, G.ANIMATION_ATLAS["aij_blind_drawn_replacement"] or G.ANIMATION_ATLAS['blind_chips'],  { x = 0, y = 0 })
+        if blind_choice.config.boss_colour ~= G.C.UI.TEXT_INACTIVE then
+            blind_choice.config.jesttempvaule = blind_choice.config.boss_colour
+            blind_choice.config.boss_colour = G.C.UI.TEXT_INACTIVE
+        end
+    else
+        if blind_choice.config.jesttempvaule ~= nil then
+            blind_choice.config.boss_colour = blind_choice.config.jesttempvaule
+            blind_choice.config.jesttempvaule = nil
+        end
+    end
     blind_choice.animation:define_draw_steps({
       {shader = 'dissolve', shadow_height = 0.05},
       {shader = 'dissolve'}
@@ -6965,10 +7061,19 @@ function UnBlind_create_UIBox_blind(type)
 	if G.GAME.modifiers.no_blind_reward and G.GAME.modifiers.no_blind_reward[type] then _reward = nil end
 	if blind_state == 'Select' then blind_state = 'Current' end
 	local blind_desc_nodes = {}
+	if has_blind_drawn then
+	    for k, v in ipairs(text_table) do
+	        blind_desc_nodes[#blind_desc_nodes+1] = {n=G.UIT.R, config={align = "cm", maxw = 2.8}, nodes={
+	            {n=G.UIT.T, config={text = "???", scale = 0.32, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}}
+	        }}
+	    end
+	    blind_col = G.C.UI.TEXT_INACTIVE
+	else
 	for k, v in ipairs(text_table) do
 	  blind_desc_nodes[#blind_desc_nodes+1] = {n=G.UIT.R, config={align = "cm", maxw = 2.8}, nodes={
 	    {n=G.UIT.T, config={text = v or '-', scale = 0.32, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.WHITE, shadow = not disabled}}
 	  }}
+	end
 	end
 	local run_info_colour = run_info and (blind_state == 'Defeated' and G.C.GREY or blind_state == 'Skipped' and mix_colours(G.C.BLUE, G.C.GREY, 0.5) or blind_state == 'Upcoming' and G.C.ORANGE or G.C.GOLD)
 	local blind_state_text_colour =  (blind_state == 'Defeated' and G.C.UI.BACKGROUND_LIGHT or   blind_state == 'Skipped' and G.C.UI.BACKGROUND_LIGHT or blind_state == 'Upcoming' and G.C.WHITE or G.C.GOLD)

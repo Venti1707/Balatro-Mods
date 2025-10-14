@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'fe1641a9c72c36463a2000779de099139306bb3c705537935a9e5ff0cba9e141'
+LOVELY_INTEGRITY = 'c421509963ffe4578234204dbbb12472098a9274db27e7002fe7f330d2aff91c'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -1666,6 +1666,8 @@ function loc_colour(_c, _default)
     edition = G.C.EDITION,
     dark_edition = G.C.DARK_EDITION,
     legendary = G.C.RARITY[4],
+    jest_inherent = HEX("b7e1d7"),
+    jest_glitter = HEX("ff97ff"),
     enhanced = G.C.SECONDARY_SET.Enhanced
   }
       for _, v in ipairs(SMODS.Rarity.obj_buffer) do

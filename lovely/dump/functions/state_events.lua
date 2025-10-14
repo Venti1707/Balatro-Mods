@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f559b0c0fc9aa3be7ca7999ce1dadb88a60b64eb225ee873d6ee81b39945d744'
+LOVELY_INTEGRITY = '3014e67ad71ca9de9815523c2f556b83556dfec9c891e77801db497434af9151'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -400,7 +400,19 @@ G.FUNCS.discard_cards_from_highlighted = function(e, hook)
                 end
             else 
                 G.hand.highlighted[i].ability.discarded = true
+                local has_line_in_the_sand = false
+                if G.jokers ~= nil and G.jokers.cards then
+                    for _, j in ipairs(G.jokers.cards) do
+                        if j.config and j.config.center_key == "j_aij_line_in_the_sand" then
+                            has_line_in_the_sand = true
+                        end
+                    end
+                end
+                if has_line_in_the_sand then
+                    draw_card(G.hand, G.jest_super_discard, i*100/highlighted_count, 'down', false, G.hand.highlighted[i])
+                else
                 draw_card(G.hand, G.discard, i*100/highlighted_count, 'down', false, G.hand.highlighted[i])
+                end
             end
         end
 
@@ -884,6 +896,13 @@ function evaluate_play_intro()
     G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
+            local has_line_in_the_sand = next(SMODS.find_card("j_aij_line_in_the_sand"))
+            if has_line_in_the_sand and G.GAME.blind.boss then
+                local discard_count = #G.jest_super_discard.cards
+                for i=1, discard_count do --draw cards from deck
+                    draw_card(G.jest_super_discard, G.deck, i*100/discard_count,'up', nil ,nil, 0.005, i%2==0, nil, math.max((21-i)/20,0.7))
+                end
+            end
             local discard_count = #G.discard.cards
             for i=1, discard_count do --draw cards from deck
                 draw_card(G.discard, G.deck, i*100/discard_count,'up', nil ,nil, 0.005, i%2==0, nil, math.max((21-i)/20,0.7))
@@ -983,6 +1002,7 @@ G.FUNCS.evaluate_round = function()
         end
         check_for_unlock({type = 'interest_streak'})
         dollars = dollars + G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)
+        dollars = math.floor(dollars + 0.5)
     end
 
     pitch = pitch + 0.06

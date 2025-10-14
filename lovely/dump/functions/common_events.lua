@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '65ac150076dd1647ad8328eae5d8b3c41fba3e73c3f8b2a127ee42707a019311'
+LOVELY_INTEGRITY = '617189f3e085f0f3f7d64929d2beb676b23ac8f23cb10fe7acbdc50b687becdf'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -656,6 +656,13 @@ function eval_card(card, context)
             end
         end
         
+        if card.ability.perma_retriggers ~= nil and card.ability.perma_retriggers > 0 then
+            ret.perma_retriggers = {
+                repetitions = card.ability.perma_retriggers,
+                card = card,
+                message = localize('k_again_ex')
+            }
+        end
         -- TARGET: evaluate your own repetition effects
         if card.ability.repetitions and card.ability.repetitions > 0 then
             ret.seals = ret.seals or { card = card, message = localize('k_again_ex') }
@@ -739,6 +746,10 @@ function eval_card(card, context)
             ret.playing_card.x_chips = x_chips
         end
     
+        local perma_retriggers = card:get_perma_retriggers()
+        if perma_retriggers ~= 0 then
+            ret.playing_card.perma_retriggers = perma_retriggers
+        end
         -- TARGET: main scoring on played cards
     end
     if context.end_of_round and context.cardarea == G.hand and context.playing_card_end_of_round then
@@ -800,6 +811,30 @@ function eval_card(card, context)
         end
     end
     
+    if context.final_scoring_step and context.cardarea == G.play and context.full_hand then
+        for i = 1, #G.play.cards do
+            if G.play.cards[i].ability.set == 'Enhanced' and G.play.cards[i].ability.jest_chaotic_card then
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'after',
+                    delay = 0.1,
+                    func = function()
+                        local cen_pool = {}
+                        for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
+                            if v.key ~= 'm_stone' then 
+                                cen_pool[#cen_pool+1] = v
+                            end
+                        end
+                        center = pseudorandom_element(cen_pool, pseudoseed('jest_chaotic_card'))
+                    
+                        G.play.cards[i]:juice_up(0.3, 0.3)
+                        G.play.cards[i]:set_ability(center)
+                        G.play.cards[i].ability.jest_chaotic_card = true
+                    return true
+                    end
+                }))
+            end
+        end
+    end
     -- TARGET: evaluate your own general effects
     local post_trig = {}
     local areas = SMODS.get_card_areas('jokers')
@@ -2296,6 +2331,17 @@ function get_current_pool(_type, _rarity, _legendary, _append)
         G.ARGS.TEMP_POOL = EMPTY(G.ARGS.TEMP_POOL)
         local _pool, _starting_pool, _pool_key, _pool_size = G.ARGS.TEMP_POOL, nil, '', 0
     
+        if G.GAME.jest_legendary_pool ~= nil and _type == 'Joker' then
+            if G.GAME.jest_legendary_pool.in_shop then
+                local rary = _rarity or pseudorandom('rarity'..G.GAME.round_resets.ante..(_append or '')) 
+                if type(rary) == "number" and (_rarity == nil or _rarity == 4 or _rarity == "Legendary") then
+                    rary = (rary > G.GAME.jest_legendary_pool.rate and 4) or 1 
+                    if rary ~= 1 then
+                        _legendary = true
+                    end
+                end
+            end
+        end
         if _type == 'Joker' then 
 _rarity = (_legendary and 4) or (type(_rarity) == "number" and ((_rarity > 0.95 and 3) or (_rarity > 0.7 and 2) or 1)) or _rarity
 _rarity = ({Common = 1, Uncommon = 2, Rare = 3, Legendary = 4})[_rarity] or _rarity
@@ -2472,6 +2518,61 @@ function create_card(_type, area, legendary, _rarity, skip_materialize, soulable
         _type = (center.set ~= 'Default' and center.set or _type)
     else
         local _pool, _pool_key = get_current_pool(_type, _rarity, legendary, key_append)
+                if _type == 'Planet' then
+                    local boosted_planet_keys = {
+                        ['c_mercury'] = true, ['c_venus'] = true, ['c_earth'] = true,
+                        ['c_mars'] = true,    ['c_jupiter'] = true,['c_saturn'] = true,
+                        ['c_uranus'] = true,  ['c_neptune'] = true,['c_planet_x'] = true,
+                        ['c_ceres'] = true, ['c_eris'] = true, ['c_aij_vulcanoid'] = true, 
+                        ['c_aij_phaethon'] = true, ['c_aij_zoozve'] = true, ['c_aij_2013_nd15'] = true, 
+                        ['c_aij_luna'] = true, ['c_aij_kamooalewa'] = true, ['c_aij_phobos'] = true, 
+                        ['c_aij_deimos'] = true, ['c_aij_europa'] = true, ['c_aij_callisto'] = true, 
+                        ['c_aij_titan'] = true, ['c_aij_iapetus'] = true, ['c_aij_umbriel'] = true, 
+                        ['c_aij_oberon'] = true, ['c_aij_triton'] = true, ['c_aij_proteus'] = true, 
+                        ['c_aij_nix'] = true, ['c_aij_charon'] = true, ['c_aij_planet_nine'] = true, 
+                        ['c_aij_nibiru'] = true, ['c_aij_pallas'] = true, ['c_aij_2000_eu16'] = true, 
+                        ['c_aij_dysnomia'] = true, ['c_aij_kuiper'] = true, ['c_paperback_quaoar'] = true,
+                        ['c_paperback_haumea'] = true, ['c_paperback_sedna'] = true, ['c_paperback_makemake'] = true,
+                        ['c_aij_paper_weywot'] = true, ['c_aij_paper_namaka'] = true, ['c_aij_paper_ilmare'] = true,
+                        ['c_aij_paper_salacia'] = true, ['c_aij_paper_ixion'] = true, ['c_aij_paper_hiiaka'] = true,
+                        ['c_aij_paper_varda'] = true, ['c_aij_paper_mk2'] = true, ['c_bunc_quaoar'] = true,
+                        ['c_bunc_haumea'] = true, ['c_bunc_sedna'] = true, ['c_bunc_makemake'] = true,
+                        ['c_aij_bunc_weywot'] = true, ['c_aij_bunc_namaka'] = true, ['c_aij_bunc_ilmare'] = true,
+                        ['c_aij_bunc_salacia'] = true, ['c_aij_bunc_ixion'] = true, ['c_aij_bunc_hiiaka'] = true,
+                        ['c_aij_bunc_varda'] = true, ['c_aij_bunc_mk2'] = true,
+                       
+                    }
+                    local weighted_pool = {}
+                    if _pool and #_pool > 0 then 
+                        for i = 1, #_pool do
+                            local item = _pool[i] 
+                            local item_key = nil
+                            if type(item) == 'string' then
+                                item_key = item
+                            elseif type(item) == 'table' and item.key then 
+                                item_key = item.key
+                            end
+        
+                            if item_key then
+                                local weight = 3
+                                if boosted_planet_keys[item_key] then
+                                    weight = 1 
+                                end
+                                -- Add the original item key from the pool 'weight' times
+                                for w = 1, weight do
+                                    table.insert(weighted_pool, item_key) 
+                                end
+                            else
+                                 -- Fallback if we somehow can't determine the key
+                                 table.insert(weighted_pool, item)
+                            end
+                        end
+                        
+                        if #weighted_pool > 0 then 
+                            _pool = weighted_pool
+                        end
+                    end
+                end
         center = pseudorandom_element(_pool, pseudoseed(_pool_key))
         local it = 1
         while center == 'UNAVAILABLE' do
@@ -2497,6 +2598,17 @@ function create_card(_type, area, legendary, _rarity, skip_materialize, soulable
         end
     end
 
+    if G.GAME.jest_legendary_pool ~= nil and _type == 'Joker' then
+        if G.GAME.jest_legendary_pool.in_shop then
+            local rary = _rarity or pseudorandom('rarity'..G.GAME.round_resets.ante..(_append or '')) 
+            if type(rary) == "number" and (_rarity == nil or _rarity == 4 or _rarity == "Legendary") then
+                rary = (rary > G.GAME.jest_legendary_pool.rate and 4) or 1 
+                if rary ~= 1 then
+                    _legendary = true
+                end
+            end
+        end
+    end
     if _type == 'Joker' then
         if G.GAME.modifiers.all_eternal then
             card:set_eternal(true)
@@ -2535,6 +2647,11 @@ function copy_card(other, new_card, card_scale, playing_card, strip_edition)
         end
     end
 
+    if other.edition and other.edition.negative and not All_in_Jest.config.no_copy_neg and not G.VIEWING_DECK then
+        if other.ability.set == 'Enhanced' or other.ability.set == 'Default' then
+            strip_edition = true
+        end
+    end
     if not strip_edition then 
         if other.edition then
             new_card.ability.card_limit = new_card.ability.card_limit - (other.edition.card_limit or 0)
@@ -3057,6 +3174,9 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
             end
         end
     SMODS.localize_perma_bonuses(specific_vars, desc_nodes)
+    if specific_vars and specific_vars.bonus_retriggers then
+        localize{type = 'other', key = 'card_extra_retriggers', nodes = desc_nodes, vars = {specific_vars.bonus_retriggers}}
+    end
     elseif _c.set == 'Enhanced' then 
         if specific_vars and _c.name ~= 'Stone Card' and specific_vars.nominal_chips then
             localize{type = 'other', key = 'card_chips', nodes = desc_nodes, vars = {specific_vars.nominal_chips}}
@@ -3074,6 +3194,9 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
             localize{type = 'other', key = 'card_extra_chips', nodes = desc_nodes, vars = {SMODS.signed((specific_vars and specific_vars.bonus_chips) or cfg.bonus)}}
         end
     SMODS.localize_perma_bonuses(specific_vars, desc_nodes)
+    if specific_vars and specific_vars.bonus_retriggers then
+        localize{type = 'other', key = 'card_extra_retriggers', nodes = desc_nodes, vars = {specific_vars.bonus_retriggers}}
+    end
     elseif _c.set == 'Booster' then 
         local desc_override = 'p_arcana_normal'
         if _c.name == 'Arcana Pack' then desc_override = 'p_arcana_normal'; loc_vars = {cfg.choose, cfg.extra}
@@ -3288,6 +3411,7 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
                 end
                 info_queue[#info_queue+1] = t
             else
+            if v == 'k_aij_jest_chaotic_card' then info_queue[#info_queue+1] = {key = 'aij_jest_chaotic_card', set = 'Other'} end
             if v == 'eternal' then info_queue[#info_queue+1] = {key = 'eternal', set = 'Other'} end
             if v == 'perishable' then info_queue[#info_queue+1] = {key = 'perishable', set = 'Other', vars = {G.GAME.perishable_rounds or 1, specific_vars.perish_tally or G.GAME.perishable_rounds}} end
             if v == 'rental' then info_queue[#info_queue+1] = {key = 'rental', set = 'Other', vars = {G.GAME.rental_rate or 1}} end

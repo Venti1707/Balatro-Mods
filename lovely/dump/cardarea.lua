@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'a38fc10d63fc47aabd239e2c92b13847218dbbb5ee1e266dcd04639b44b3aee9'
+LOVELY_INTEGRITY = '80ca0daf81e8d2ea1185588db3206bd6b1ef1c1a367b7f7176bc16ed8d436c3a'
 
 --Class
 CardArea = Moveable:extend()
@@ -661,6 +661,16 @@ end
 
 function CardArea:shuffle(_seed)
     pseudoshuffle(self.cards, pseudoseed(_seed or 'shuffle'))
+    local has_circuit_diagram = next(SMODS.find_card("j_aij_circuit_diagram"))
+    if has_circuit_diagram then
+        for i = #self.cards, 1, -1 do
+            local card = self.cards[i]
+            if card.config.center == G.P_CENTERS["m_aij_charged"] then
+                table.remove(self.cards, i)
+                table.insert(self.cards, #self.cards + 1, card)
+            end
+        end
+    end
     self:set_ranks()
 end
 

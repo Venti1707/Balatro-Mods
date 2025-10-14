@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'fdf19a7707a2f29afced2a04f5b8a801a3d6bdaa008287949fb808bac2829c8e'
+LOVELY_INTEGRITY = 'c34cb7edb15a4a2d73860cb43d3a0d38a6e9389a9bf23be476dd5b01716795bf'
 
 --class
 Card = Moveable:extend()
@@ -362,6 +362,7 @@ function Card:set_ability(center, initial, delay_sprites)
         order = center.order or nil,
         forced_selection = self.ability and self.ability.forced_selection or nil,
         perma_bonus = self.ability and self.ability.perma_bonus or 0,
+        perma_retriggers = self.ability and self.ability.perma_retriggers or 0,
         perma_x_chips = self.ability and self.ability.perma_x_chips or 0,
         perma_mult = self.ability and self.ability.perma_mult or 0,
         perma_x_mult = self.ability and self.ability.perma_x_mult or 0,
@@ -497,7 +498,8 @@ function Card:set_cost()
         for k, v in pairs(G.P_CENTER_POOLS.Edition) do
             if self.edition[v.key:sub(3)] then
                 if v.extra_cost then
-                    self.extra_cost = self.extra_cost + v.extra_cost
+                    local has_chef = next(SMODS.find_card("j_aij_chef"))
+                    if has_chef and self.ability.perishable then self.extra_cost = 0 else self.extra_cost = self.extra_cost + v.extra_cost end
                 end
             end
         end
@@ -734,11 +736,17 @@ function Card:change_suit(new_suit)
 end
 
 function Card:add_to_deck(from_debuff)
+    if not self.config.center.unlocked and self.config.center.rarity == 4 then
+        unlock_card(self.config.center)
+    end
     if not self.config.center.discovered then
         discover_card(self.config.center)
     end
     if not self.added_to_deck then
         self.added_to_deck = true
+            if self.ability and self.ability.from_guess_the_jest and self.ability.set == 'Joker' then
+                self.ability.from_guess_the_jest = nil
+            end
         if self.ability.set == 'Enhanced' or self.ability.set == 'Default' then 
             if self.ability.name == 'Gold Card' and self.seal == 'Gold' and self.playing_card then 
                 check_for_unlock({type = 'double_gold'})
@@ -905,6 +913,7 @@ function Card:generate_UIBox_ability_table(vars_only)
                     bonus_h_mult = self.ability.perma_h_mult ~= 0 and self.ability.perma_h_mult or nil,
                     bonus_h_x_mult = self.ability.perma_h_x_mult ~= 0 and (self.ability.perma_h_x_mult + 1) or nil,
                     bonus_p_dollars = self.ability.perma_p_dollars ~= 0 and self.ability.perma_p_dollars or nil,
+                    bonus_retriggers = self.ability.perma_retriggers ~= 0 and self.ability.perma_retriggers or nil,
                     bonus_h_dollars = self.ability.perma_h_dollars ~= 0 and self.ability.perma_h_dollars or nil,
                     total_h_dollars = total_h_dollars ~= 0 and total_h_dollars or nil,
                     bonus_chips = bonus_chips ~= 0 and bonus_chips or nil,
@@ -988,6 +997,24 @@ function Card:generate_UIBox_ability_table(vars_only)
         elseif self.ability.name == 'Hiker' then loc_vars = {self.ability.extra}
         elseif self.ability.name == 'To Do List' then loc_vars = {self.ability.extra.dollars, localize(self.ability.to_do_poker_hand, 'poker_hands')}
         elseif self.ability.name == 'Smeared Joker' then
+        elseif self.ability.name == 'j_aij_clay_joker' then
+            self.ability.blueprint_compat_ui = self.ability.blueprint_compat_ui or ''; self.ability.blueprint_compat_check = nil
+            main_end = (self.area and self.area == G.jokers) and {
+                {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                    {n=G.UIT.C, config={ref_table = self, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                        {n=G.UIT.T, config={ref_table = self.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                    }}
+                }}
+            } or nil
+        elseif self.ability.name == 'j_aij_visage' then
+            self.ability.blueprint_compat_ui = self.ability.blueprint_compat_ui or ''; self.ability.blueprint_compat_check = nil
+            main_end = (self.area and self.area == G.jokers) and {
+                {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                    {n=G.UIT.C, config={ref_table = self, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                        {n=G.UIT.T, config={ref_table = self.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                    }}
+                }}
+            } or nil
         elseif self.ability.name == 'Blueprint' then
             self.ability.blueprint_compat_ui = self.ability.blueprint_compat_ui or ''; self.ability.blueprint_compat_check = nil
             main_end = (self.area and self.area == G.jokers) and {
@@ -1119,6 +1146,7 @@ function Card:generate_UIBox_ability_table(vars_only)
         end
     end
     if self.seal then badges[#badges + 1] = string.lower(self.seal)..'_seal' end
+    if self.ability.jest_chaotic_card then badges[#badges + 1] = 'k_aij_jest_chaotic_card' end
     if self.ability.eternal then badges[#badges + 1] = 'eternal' end
     if self.ability.perishable then
         loc_vars = loc_vars or {}; loc_vars.perish_tally=self.ability.perish_tally
@@ -1184,12 +1212,24 @@ function Card:get_chip_mult()
 
     if self.ability.set == 'Joker' then return 0 end
     local ret = (not self.ability.extra_enhancement and self.ability.perma_mult) or 0
-    if self.ability.effect == "Lucky Card" then
-        if SMODS.pseudorandom_probability(self, 'lucky_mult', 1, 5) then
-            self.lucky_trigger = true
-            ret = ret + self.ability.mult
-        end
-    else
+     local is_chip_mult = self.ability._saved_chip_values ~= nil
+    
+        if self.ability.effect == "Lucky Card" then
+            local base_mult = 0
+            if is_chip_mult then
+                base_mult = (self.ability._saved_chip_values.nominal or 0) +
+                            (self.ability._saved_chip_values.bonus or 0) +
+                            (self.ability._saved_chip_values.perma_bonus or 0)
+            end
+            
+            local ret = base_mult + ((not self.ability.extra_enhancement and self.ability.perma_mult) or 0)
+    
+            if SMODS.pseudorandom_probability(self, 'lucky_mult', 1, 5) then
+                self.lucky_trigger = true
+                ret = ret + self.ability.mult
+            end
+            return ret
+        else
         ret = ret + self.ability.mult
     end
     -- TARGET: get_chip_mult
@@ -1245,6 +1285,12 @@ function Card:get_h_dollars()
     -- TARGET: get_h_dollars
     return ret
 end
+function Card:get_perma_retriggers()
+    if self.debuff then return 0 end
+    local ret = self.ability.perma_retriggers or 0
+    -- TARGET: get_perma_retriggers
+    return ret
+end
 function Card:get_edition()
     if self.debuff then return end
     if self.edition then
@@ -1280,7 +1326,7 @@ function Card:get_end_of_round_effect(context)
                 if G.GAME.last_hand_played then
                     local _planet = 0
                     for k, v in pairs(G.P_CENTER_POOLS.Planet) do
-                        if v.config.hand_type == G.GAME.last_hand_played then
+                        if v.config.hand_type == G.GAME.last_hand_played and not v.config.moon then
                             _planet = v.key
                         end
                     end
@@ -1950,6 +1996,9 @@ function Card:open()
         stop_use()
         G.STATE_COMPLETE = false 
         self.opening = true
+        for i = #G.GAME.tags, 1, -1 do
+            if G.GAME.tags[i]:apply_to_run({type = 'open_booster', booster = self}) then break end
+        end
 
         if not self.config.center.discovered then
             discover_card(self.config.center)
@@ -2412,6 +2461,50 @@ function Card:shatter()
 end
 
 function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
+    local has_anchor = false
+    local location = 0
+    if G.jokers and self.ability.set == 'Joker' then
+        if G.jokers and G.jokers.cards then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i].config and G.jokers.cards[i].config.center_key == "j_aij_anchor" and not G.jokers.cards[i].debuff then
+                    has_anchor = true
+                    location = i
+                end
+            end
+        end
+        if has_anchor then
+            local left  = location - 1
+            local right = location + 1
+            local nearby = (left >= 1 and G.jokers.cards[left].config.center_key == self.config.center_key) or (right <= #G.jokers.cards and G.jokers.cards[right].config.center_key == self.config.center_key)
+
+            if nearby and self.ability.jest_sold_self == nil then
+                self.getting_sliced = false
+                return
+            end
+        end
+    end
+    local has_anchor = false
+    local location = 0
+    if G.jokers and self.ability.set == 'Joker' then
+        if G.jokers and G.jokers.cards then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i].config and G.jokers.cards[i].config.center_key == "j_aij_anchor" and not G.jokers.cards[i].debuff then
+                    has_anchor = true
+                    location = i
+                end
+            end
+        end
+        if has_anchor then
+            local left  = location - 1
+            local right = location + 1 
+            local nearby = (left >= 1 and G.jokers.cards[left].config.center_key == self.config.center_key) or (right <= #G.jokers.cards and G.jokers.cards[right].config.center_key == self.config.center_key)
+            local is_anchor_itself = (self.config.center_key == "j_aij_anchor")
+            if (is_nearby or is_anchor_itself) and self.ability.jest_sold_self == nil then
+                self.getting_sliced = false
+                return
+            end
+        end
+    end
     if self.getting_sliced and not (self.ability.set == 'Default' or self.ability.set == 'Enhanced') then
         local flags = SMODS.calculate_context({joker_type_destroyed = true, card = self})
         if flags.no_destroy then self.getting_sliced = nil; return end
@@ -4529,10 +4622,41 @@ function Card:update(dt)
                 end
             end
         end
+        if self.ability.name == 'j_aij_clay_joker' or self.ability.name == 'j_aij_visage' then
+        	local other_joker = nil
+            if self.ability.name == 'j_aij_visage' then
+                other_joker = G.GAME.jest_visage_last_sold
+            elseif self.ability.name == 'j_aij_clay_joker' then
+                other_joker = G.GAME.jest_clay_last_destroyed
+            end
+            if other_joker and other_joker ~= self and other_joker.config.center.blueprint_compat then
+                self.ability.blueprint_compat = 'compatible'
+            else
+                self.ability.blueprint_compat = 'incompatible'
+            end
+        end
         if self.ability.name == 'Blueprint' or self.ability.name == 'Brainstorm' then
             local other_joker = nil
             if self.ability.name == 'Brainstorm' then
                 other_joker = G.jokers.cards[1]
+            elseif self.ability.name == 'j_aij_clay_joker' then
+                self.ability.blueprint_compat_ui = self.ability.blueprint_compat_ui or ''; self.ability.blueprint_compat_check = nil
+                main_end = (self.area and self.area == G.jokers) and {
+                    {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                        {n=G.UIT.C, config={ref_table = self, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                            {n=G.UIT.T, config={ref_table = self.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                        }}
+                    }}
+                } or nil
+            elseif self.ability.name == 'j_aij_visage' then
+                self.ability.blueprint_compat_ui = self.ability.blueprint_compat_ui or ''; self.ability.blueprint_compat_check = nil
+                main_end = (self.area and self.area == G.jokers) and {
+                    {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                        {n=G.UIT.C, config={ref_table = self, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                            {n=G.UIT.T, config={ref_table = self.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                        }}
+                    }}
+                } or nil
             elseif self.ability.name == 'Blueprint' then
                 for i = 1, #G.jokers.cards do
                     if G.jokers.cards[i] == self then other_joker = G.jokers.cards[i+1] end
@@ -4615,6 +4739,10 @@ function Card:hover()
     play_sound('paper1', math.random()*0.2 + 0.9, 0.35)
 
     --if this is the focused card
+    -- Prevent tooltip for Guess the Jest cards while in the pack
+    if (self.ability and self.ability.from_guess_the_jest and self.area == G.pack_cards) or self.ability.jest_got_no_ui then
+        return
+    end
     if self.states.focus.is and not self.children.focused_ui then
         self.children.focused_ui = G.UIDEF.card_focus_ui(self)
     end
