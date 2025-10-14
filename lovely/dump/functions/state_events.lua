@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1dfc017f850384570fcf49dc1246f69f243d458e79e6fd2ff7d60d10d50b475c'
+LOVELY_INTEGRITY = '3d752a4e0d77e670c444e07bdda3f68a300691b2e44fb7140e8bf9cddf5cfeff'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -662,6 +662,7 @@ function evaluate_play_intro()
 
         local modded = false
 
+        SMODS.calculate_context { after_before = true }
         mult, hand_chips, modded = G.GAME.blind:modify_hand(G.play.cards, poker_hands, text, mult, hand_chips, scoring_hand)
         mult, hand_chips = mod_mult(mult), mod_chips(hand_chips)
         if modded then update_hand_text({sound = 'chips2', modded = modded}, {chips = hand_chips, mult = mult}) end
