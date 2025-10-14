@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '9e3905d20da5d6b0b248c258b200f4b2d0d996c15d83e0d1e4afc1e2b06582fa'
+LOVELY_INTEGRITY = '7460ef0eb3e74d949d89f1fe0ee16bf44441badfb73a9e7717f72b57af214e94'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -1401,15 +1401,7 @@ end
 function add_tag(_tag)
   G.HUD_tags = G.HUD_tags or {}
   local tag_sprite_ui = _tag:generate_UI()
-  G.HUD_tags[#G.HUD_tags+1] = UIBox{
-      definition = {n=G.UIT.ROOT, config={align = "cm",padding = 0.05, colour = G.C.CLEAR}, nodes={
-        tag_sprite_ui
-      }},
-      config = {
-        align = G.HUD_tags[1] and 'tm' or 'bri',
-        offset = G.HUD_tags[1] and {x=0,y=0} or {x=0.7,y=0},
-        major = G.HUD_tags[1] and G.HUD_tags[#G.HUD_tags] or G.ROOM_ATTACH}
-  }
+
   discover_card(G.P_TAGS[_tag.key])
 
   for i = 1, #G.GAME.tags do
@@ -1419,7 +1411,7 @@ function add_tag(_tag)
   G.GAME.tags[#G.GAME.tags+1] = _tag
   if not _tag.from_load then SMODS.calculate_context({tag_added = _tag}) end
   _tag.from_load = nil
-  _tag.HUD_tag = G.HUD_tags[#G.HUD_tags]
+  generateTagUi()
 end
 
 function create_UIBox_HUD()

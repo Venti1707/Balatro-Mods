@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '60da46619652e6e1c645c6e7113d3740cf8c1c1080cc5e9ade809a3159a22691'
+LOVELY_INTEGRITY = 'defe2ce7dbf0723efe6562be9396b33a68dd478e614f1fe5815b7a7d5350604a'
 
 --Class
 Tag = Object:extend()
@@ -15,6 +15,7 @@ function Tag:init(_tag, for_collection, _blind_type)
     G.tagid = G.tagid or 0
     self.ID = G.tagid
     G.tagid = G.tagid + 1
+    self.count = _tag.count or 1
     self.ability = {
         orbital_hand = '['..localize('k_poker_hand')..']',
         blind_type = _blind_type
@@ -45,7 +46,7 @@ function Tag:nope()
         trigger = 'after',
         delay = 0.1,
         func = (function()
-            self.HUD_tag.states.visible = false
+
             play_sound('cancel', 1.26, 0.5)
             return true
         end)
@@ -56,6 +57,7 @@ function Tag:nope()
         delay = 0.5,
         func = (function()
             self:remove()
+            generateTagUi()
             return true
         end)
     }))
@@ -84,7 +86,7 @@ function Tag:yep(message, _colour, func)
     }))
     G.E_MANAGER:add_event(Event({
         func = (function()
-            self.HUD_tag.states.visible = false
+
             return true
         end)
     }))
@@ -97,6 +99,7 @@ function Tag:yep(message, _colour, func)
         delay = 0.7,
         func = (function()
             self:remove()
+            generateTagUi()
             return true
         end)
     }))
@@ -489,6 +492,8 @@ function Tag:save()
         key = self.key,
         tally = self.tally, 
         ability = self.ability
+        ,
+        count = self.count
     }
 end
 
@@ -500,6 +505,7 @@ function Tag:load(tag_savetable)
     self.name = proto.name
     self.tally = tag_savetable.tally
     self.ability = tag_savetable.ability
+    self.count = tag_savetable.count
     G.GAME.tag_tally = math.max(self.tally, G.GAME.tag_tally) + 1
     self.from_load = true
 end
@@ -613,4 +619,5 @@ function Tag:remove()
     end
 
     self.HUD_tag:remove()
+    generateTagUi()
 end

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'b866e1f745419d9bd12a48b8744c543ce18468af4e7ca08a855fef37cc4b611c'
+LOVELY_INTEGRITY = 'd0430c87a0f34a4cf299a7025b6327d138f2431fbe310709c75ca67d5ed18932'
 
 --Class
 Game = Object:extend()
@@ -2501,6 +2501,7 @@ function Game:start_run(args)
         reset_blinds()
     end
 
+generateTagUi()
     Cartomancer.update_tags_visibility()
     G.FUNCS.blind_chip_UI_scale(G.hand_text_area.blind_chips)
      
