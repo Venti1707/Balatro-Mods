@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'd0430c87a0f34a4cf299a7025b6327d138f2431fbe310709c75ca67d5ed18932'
+LOVELY_INTEGRITY = 'b204c829875dcd1f28686a3d1ea6a52bc233ab8d726955bef65723a2315f05c8'
 
 --Class
 Game = Object:extend()
@@ -2070,6 +2070,13 @@ function Game:start_run(args)
     end
     self.GAME.selected_back_key = selected_back
     
+    if not saveTable then
+        if args.seed then self.GAME.seeded = true end
+        self.GAME.pseudorandom.seed = args.seed or (not (G.SETTINGS.tutorial_complete or G.SETTINGS.tutorial_progress.completed_parts["big_blind"]) and "TUTORIAL") or generate_starting_seed()
+    end
+    for k, v in pairs(self.GAME.pseudorandom) do if v == 0 then self.GAME.pseudorandom[k] = pseudohash(k..self.GAME.pseudorandom.seed) end end
+    self.GAME.pseudorandom.hashed_seed = pseudohash(self.GAME.pseudorandom.seed)
+    
     if saveTable then
         self.GAME.current_scoring_calculation = SMODS.Scoring_Calculations[saveTable.SCORING_CALC.key]:load({
             config = saveTable.SCORING_CALC.config
@@ -2209,13 +2216,16 @@ function Game:start_run(args)
 
     G.GAME.chips_text = ''
 
+    -- moved this code to earlier in the function (by CardSleeves)
+    --[[
     if not saveTable then
         if args.seed then self.GAME.seeded = true end
         self.GAME.pseudorandom.seed = args.seed or (not (G.SETTINGS.tutorial_complete or G.SETTINGS.tutorial_progress.completed_parts['big_blind']) and "TUTORIAL") or generate_starting_seed()
     end
-
+    
     for k, v in pairs(self.GAME.pseudorandom) do if v == 0 then self.GAME.pseudorandom[k] = pseudohash(k..self.GAME.pseudorandom.seed) end end
     self.GAME.pseudorandom.hashed_seed = pseudohash(self.GAME.pseudorandom.seed)
+    --]]
 
     BANNERMOD.setup_game(not saveTable)
     G:save_settings()
@@ -3273,6 +3283,20 @@ function Game:update_shop(dt)
                                 end
 
                                 if not nosave_shop then SMODS.calculate_context({starting_shop = true}) end
+                                if CardSleeves then
+                                    -- CardSleeves custom context stuff
+                                    G.E_MANAGER:add_event(Event({
+                                        delay = 0.01,  --  because stupid fucking tags not applying immediately
+                                        blockable = true,
+                                        trigger = 'after',
+                                        func = function()
+                                            local sleeve_center = CardSleeves.Sleeve:get_obj(G.GAME.selected_sleeve or "sleeve_casl_none")
+                                            sleeve_center:trigger_effect{context = "shop_final_pass"}
+                                            if type(sleeve_center.calculate) == "function" then sleeve_center:calculate(sleeve_center, {shop_final_pass = true, deprecated = true}) end
+                                            return true
+                                        end
+                                    }))
+                                end
                                 G.CONTROLLER:snap_to({node = G.shop:get_UIE_by_ID('next_round_button')})
                                 if not nosave_shop then G.E_MANAGER:add_event(Event({ func = function() save_run(); return true end})) end
                                 return true

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '7460ef0eb3e74d949d89f1fe0ee16bf44441badfb73a9e7717f72b57af214e94'
+LOVELY_INTEGRITY = '441809aef4e39da446568007d722c63c56e737b05efe0820bac25daaf7768dc0'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -201,7 +201,9 @@ function create_UIBox_notify_alert(_achievement, _type)
   local subtext = _type == 'achievement' and localize(G.F_TROPHIES and 'k_trophy' or 'k_achievement') or
     _type == 'Joker' and localize('k_joker') or 
     _type == 'Voucher' and localize('k_voucher') or
-    _type == 'Back' and localize('k_deck') or 'ERROR'
+    _type == 'Back' and localize('k_deck') or
+    _c.set and localize('k_' .. _c.set:lower()) or
+    'ERROR'
 
   if _achievement == 'b_challenge' then subtext = localize('k_challenges') end
   local name = _type == 'achievement' and localize(_achievement, 'achievement_names') or 'ERROR'

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'a0bebe2a8888ae5561b9582fad82559bc506e4711315fcd2ec6791439bb63973'
+LOVELY_INTEGRITY = 'fe1641a9c72c36463a2000779de099139306bb3c705537935a9e5ff0cba9e141'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -1459,6 +1459,12 @@ function set_discover_tallies()
   
   for _, v in pairs(G.P_CENTERS) do
     if not v.omit and not v.no_collection then
+      if v.set and v.set == 'Sleeve' then
+          G.DISCOVER_TALLIES.total.of = G.DISCOVER_TALLIES.total.of + 1
+          if v.unlocked then
+              G.DISCOVER_TALLIES.total.tally = G.DISCOVER_TALLIES.total.tally + 1
+          end
+      end
       if v.set and ((v.set == 'Joker') or v.consumeable or (v.set == 'Edition') or (v.set == 'Voucher') or (v.set == 'Back') or (v.set == 'Booster')) then
         G.DISCOVER_TALLIES.total.of = G.DISCOVER_TALLIES.total.of+1
         if v.discovered then 

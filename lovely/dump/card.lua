@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '7f3d08da51f187af8b44fd0a5df9a0894c6b5994e8ba92bb01c84d9b23b1ff51'
+LOVELY_INTEGRITY = 'fdf19a7707a2f29afced2a04f5b8a801a3d6bdaa008287949fb808bac2829c8e'
 
 --class
 Card = Moveable:extend()
@@ -4891,8 +4891,9 @@ function Card:draw(layer)
 
             if self.sticker and G.shared_stickers[self.sticker] then
                 G.shared_stickers[self.sticker].role.draw_major = self
-                G.shared_stickers[self.sticker]:draw_shader('dissolve', nil, nil, true, self.children.center)
-                if self.sticker == 'Gold' then G.shared_stickers[self.sticker]:draw_shader('voucher', nil, self.ARGS.send_to_shader, true, self.children.center) end
+                local sticker_offset = self.sticker_offset or {}
+                G.shared_stickers[self.sticker]:draw_shader('dissolve', nil, nil, true, self.children.center, nil, self.sticker_rotation, sticker_offset.x, sticker_offset.y)
+                if self.sticker == 'Gold' or self.sticker == 'gold' then G.shared_stickers[self.sticker]:draw_shader('voucher', nil, self.ARGS.send_to_shader, true, self.children.center, nil, self.sticker_rotation, sticker_offset.x, sticker_offset.y) end
             end
         end
 
