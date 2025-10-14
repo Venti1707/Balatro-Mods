@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '5ba09677a1f3daf356a413be90534d7278f908ef871f0370d02bfcd54e209aeb'
+LOVELY_INTEGRITY = '57e89bdf2020087a04260bc94e689eaa5002bb87af3fc3010e41fd51059d2c85'
 
 --Class
 CardArea = Moveable:extend()
@@ -598,7 +598,7 @@ function CardArea:align_cards()
     elseif self.config.type == 'joker' or self.config.type == 'title_2' then
         for k, card in ipairs(self.cards) do
             if not card.states.drag.is then 
-                card.T.r = 0.1*(-#self.cards/2 - 0.5 + k)/(#self.cards)+ (G.SETTINGS.reduced_motion and 0 or 1)*0.02*math.sin(2*G.TIMERS.REAL+card.T.x)
+                                card.T.r = 0.1*(-#self.cards/2 - 0.5 + k)/(#self.cards)+ (((self and self.config and self.config.tmj) or G.SETTINGS.reduced_motion) and 0 or 1)*0.02*math.sin(2*G.TIMERS.REAL+card.T.x)
                 local max_cards = math.max(#self.cards, self.config.temp_limit)
                 if max_cards_override then max_cards = max_cards_override end
                 card.T.x = self.T.x + (self.T.w-self.card_w)*((k-1)/math.max(max_cards-1, 1) - 0.5*(#self.cards-max_cards)/math.max(max_cards-1, 1)) + 0.5*(self.card_w - card.T.w)
@@ -611,7 +611,7 @@ function CardArea:align_cards()
                 end
                 local highlight_height = G.HIGHLIGHT_H/2
                 if not card.highlighted then highlight_height = 0 end
-                card.T.y = self.T.y + self.T.h/2 - card.T.h/2 - highlight_height+ (G.SETTINGS.reduced_motion and 0 or 1)*0.03*math.sin(0.666*G.TIMERS.REAL+card.T.x)
+                                card.T.y = self.T.y + self.T.h/2 - card.T.h/2 - highlight_height+ (((self and self.config and self.config.tmj) or G.SETTINGS.reduced_motion) and 0 or 1)*0.03*math.sin(0.666*G.TIMERS.REAL+card.T.x)
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end

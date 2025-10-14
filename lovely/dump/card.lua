@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '2097654fab059899caa2bef397c42cdeddeab899eedb29d2568d4c97d627bed0'
+LOVELY_INTEGRITY = '9342e6594662f8c8b1f2e1d7596e24888fec02582b6f784adca96113ebf0dea2'
 
 --class
 Card = Moveable:extend()
@@ -263,7 +263,7 @@ function Card:set_ability(center, initial, delay_sprites)
         center = G.P_CENTERS[center]
     end
     self.config.center = center
-    if not G.OVERLAY_MENU and old_center and not next(SMODS.find_card(old_center.key, true)) then
+        if not G.OVERLAY_MENU and old_center and old_center.key and not next(SMODS.find_card(old_center.key, true)) then
         G.GAME.used_jokers[old_center.key] = nil
     end
     self.sticker_run = nil
@@ -334,7 +334,7 @@ function Card:set_ability(center, initial, delay_sprites)
         end
     end
 
-    if self.ability and old_center and old_center.config.bonus then
+    if self.ability and old_center and old_center.config and old_center.config.bonus then
         self.ability.bonus = self.ability.bonus - old_center.config.bonus
     end
     

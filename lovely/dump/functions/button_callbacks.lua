@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '5f9e9df9ddca651fdfb4a2651a7ea05d3ade5a42b21308f2c03b596fc272a82d'
+LOVELY_INTEGRITY = '1f4655f53b0969df2b79a383523bf3feb3f8c7fb5326fd240055dc8f4d99057b'
 
 --Moves the tutorial to the next step in queue
 --
@@ -980,8 +980,8 @@ end
 G.FUNCS.text_input_key = function(args)
   args = args or {}
 
-  if args.key == '[' or args.key == ']' then return end
-  if args.key == '0' then args.key = 'o' end
+
+  if args.key == '0' and G.CONTROLLER.text_input_hook.config.ref_table and G.CONTROLLER.text_input_hook.config.ref_table.ref_value == "setup_seed" then args.key = 'o' end
 
   --shortcut to hook config
   local hook_config = G.CONTROLLER.text_input_hook.config.ref_table
@@ -1003,11 +1003,11 @@ G.FUNCS.text_input_key = function(args)
   local corpus = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'..(hook.config.ref_table.extended_corpus and " 0!$&()<>?:{}+-=,.[]_" or '')
   
   if hook.config.ref_table.extended_corpus then 
-    local lower_ext = '1234567890-=;\',./'
-    local upper_ext = '!@#$%^&*()_+:"<>?'
-    if string.find(lower_ext, args.key) and args.caps then 
-      args.key = string.sub(string.sub(upper_ext,string.find(lower_ext, args.key)), 0, 1)
-    end
+        local lower_ext = '1234567890-=;\',./[]'
+        local upper_ext = '!@#$%^&*()_+:"<>?{}'
+            if string.find(lower_ext, args.key, nil, true) and args.caps then 
+              args.key = string.sub(string.sub(upper_ext,string.find(lower_ext, args.key, nil, true)), 0, 1)
+            end
   end
   local text = hook_config.text
 

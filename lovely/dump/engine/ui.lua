@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1330f2507aae4eccebedae445668d25e4a4607883681811435b954523cd1f708'
+LOVELY_INTEGRITY = '3b8fca0e0e464b50ca6a24ca9cfe097334d9cf40526780afa4677c45a78e22db'
 
 --Class
 UIBox = Moveable:extend()
@@ -690,7 +690,7 @@ function UIElement:draw_self()
 
         if self.config.button_UIE and not self.config.button_UIE.config.button then button_active = false end
     end
-    if self.config.colour[4] > 0.01 then
+        if self.config.colour and (self.config.colour[4] > 0.01) then
         if self.UIT == G.UIT.T and self.config.scale then 
             self.ARGS.text_parallax = self.ARGS.text_parallax or {}
             self.ARGS.text_parallax.sx = -self.shadow_parrallax.x*0.5/(self.config.scale*(self.config.font or self.config.lang.font).FONTSCALE)

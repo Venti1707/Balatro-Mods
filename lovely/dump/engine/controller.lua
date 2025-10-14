@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '49dc1dcf2382e03bb195bcf014d98f4e02cde546c187d65dc35ad9a15a008e2d'
+LOVELY_INTEGRITY = '72621595fb2b2390c2e0537204849a6065f3f30e1c73b3d90116c74ccde16474'
 
 ---@class Controller
 Controller = Object:extend()
@@ -844,7 +844,7 @@ function Controller:key_press_update(key, dt)
         end
         if self.hovering.target and self.hovering.target:is(Card) then 
             local _card = self.hovering.target
-            if  G.OVERLAY_MENU then 
+            if G.OVERLAY_MENU or (_card and _card.area and _card.area.config and _card.area.config.collection) then
                 if key == "1"  then
                     unlock_card(_card.config.center)
                     _card:set_sprites(_card.config.center)
@@ -944,7 +944,7 @@ function Controller:key_hold_update(key, dt)
         end
     end
 end
-if key == "r" and not G.SETTINGS.paused then
+if key == "r" and not G.SETTINGS.paused and not G.CONTROLLER.text_input_hook then
             if self.held_key_times[key] > 0.7 then
                 if not G.GAME.won and not G.GAME.seeded and not G.GAME.challenge then 
                     G.PROFILES[G.SETTINGS.profile].high_scores.current_streak.amt = 0
@@ -986,7 +986,7 @@ for _, keybind in pairs(SMODS.Keybinds) do
 end
     if ((self.locked) and not G.SETTINGS.paused) or (self.locks.frame) or (self.frame_buttonpress) then return end
     self.frame_buttonpress = true
-    if key == "a" and self.held_keys["g"] and not _RELEASE_MODE then
+        if key == "a" and self.held_keys["g"] and not _RELEASE_MODE and not G.TMJUI then
         G.DEBUG = not(G.DEBUG)
     end
     if key == 'tab' and G.debug_tools then
