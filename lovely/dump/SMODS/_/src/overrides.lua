@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'a7046002a709d9cb67d7b6e25826e87d06082364630f6d3969186dc4d509f4a0'
+LOVELY_INTEGRITY = '9c17d31c5dac98ef0e148ceb88637b57191ff1a1921f2ac29544e81261a71de2'
 
 --- STEAMODDED CORE
 --- OVERRIDES
@@ -2216,8 +2216,8 @@ end
 function Card:align_h_popup()
 	local focused_ui = self.children.focused_ui and true or false
 	local popup_direction = (self.children.buy_button or (self.area and self.area.config.view_deck) or (self.area and self.area.config.type == 'shop')) and 'cl' or
-							(self.T.y > G.CARD_H*0.8 and self.T.y < G.CARD_H*1.8) and ((self.T.x > G.ROOM.T.w*0.4) and "cl" or "cr") or
-							(self.T.y < G.CARD_H*0.8) and 'bm' or
+							not self.config.center.credit and (self.T.y > G.CARD_H*0.8 and self.T.y < G.CARD_H*1.8) and ((self.T.x > G.ROOM.T.w*0.4) and "cl" or "cr") or
+							(self.T.y < G.CARD_H*1.25) and 'bm' or
 							'tm'
 	local sign = 1
 	if popup_direction == 'cl' and self.T.x <= G.ROOM.T.w*0.4 then

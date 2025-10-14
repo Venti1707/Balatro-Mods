@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '441809aef4e39da446568007d722c63c56e737b05efe0820bac25daaf7768dc0'
+LOVELY_INTEGRITY = '2d2097d9a77be84b3e1a9dab5ce8ba4e61d77d9135a340b0efe37606755aacfb'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -1252,7 +1252,7 @@ end
           end
           table.insert(info_cols, {n=G.UIT.C, config = {align="cm"}, nodes = col})
       end
-      info_boxes = {{n=G.UIT.R, config = {align="cm", padding = 0.05, card_pos = card.T.x }, nodes = info_cols}}
+      info_boxes = {{n=G.UIT.R, config = {align="cm", padding = 0.05, card_pos = card.T.x, credit = AUT.mod_credit and true or nil }, nodes = info_cols}}
       local ret_val = {n=G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR}, nodes={
           {n=G.UIT.C, config={align = "cm", func = 'show_infotip',object = Moveable(),ref_table = next(info_boxes) and info_boxes or nil}, nodes={
           {n=G.UIT.R, config={padding = outer_padding, r = 0.12, colour = lighten(G.C.JOKER_GREY, 0.5), emboss = 0.07}, nodes={
@@ -1262,7 +1262,20 @@ end
               badges[1] and {n=G.UIT.R, config={align = "cm", padding = 0.03}, nodes=badges} or nil,
             }}
           }}
-        }},
+        }},AUT.mod_credit and (G.STATE ~= G.STATES.SHOP or G.SETTINGS.paused or C3XHELPER.has_value(G.jokers.cards, card))  and ({n=G.UIT.C,  config={align = "cm", r = 0.1, padding = 0.05, emboss = 0.05}, nodes={
+	{n=G.UIT.R, config={align = "cm", colour = lighten(G.C.JOKER_GREY, 0.5), r = 0.1, padding = 0.05, emboss = 0.05}, nodes={
+	{n=G.UIT.R, config={align = "cm", colour = lighten(G.C.GREY, 0.15), r = 0.1, padding=0.2}, nodes={
+	{n=G.UIT.R, config={align = "cm"}, nodes={
+		{n=G.UIT.O, config={object = DynaText({string = localize("c3x_art_by"), colours = {G.C.WHITE}, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}},
+		{n=G.UIT.O, config={object = DynaText({string = AUT.mod_credit.art, colours = {SMODS.Gradients.c3x_COLOUR}, float = true, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}}}},
+	{n=G.UIT.R, config={align = "cm"}, nodes={
+		{n=G.UIT.O, config={object = DynaText({string = localize("c3x_code_by"), colours = {G.C.WHITE}, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}},
+		{n=G.UIT.O, config={object = DynaText({string = AUT.mod_credit.code, colours = {SMODS.Gradients.c3x_COLOUR }, float = true, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}}}},
+	{n=G.UIT.R, config={align = "cm"}, nodes={
+		{n=G.UIT.O, config={object = DynaText({string = localize("c3x_concept_by"), colours = {G.C.WHITE}, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}},
+		{n=G.UIT.O, config={object = DynaText({string = AUT.mod_credit.concept, colours = {SMODS.Gradients.c3x_COLOUR }, float = true, shadow = true, offset_y = -0.05, silent = true, spacing = 1, scale = 0.33})}}}},
+}}}}}}) or nil
+
       }}
               if multi_boxes[1] then
                   for i=1, #ret_val.nodes[1].nodes[1].nodes[1].nodes do -- find the main box
@@ -4264,6 +4277,7 @@ function create_UIBox_your_collection_decks()
                   {n=G.UIT.R, config={align = "cm", emboss = 0.1, r = 0.1, minw = 4, maxw = 4, minh = 0.6}, nodes={
                     {n=G.UIT.O, config={id = nil, func = 'RUN_SETUP_check_back_name', object = Moveable()}},
                   }},
+                  	c3x_generate_deck_credit_payload(),
                   {n=G.UIT.R, config={align = "cm", colour = G.C.WHITE, emboss = 0.1, minh = 2.2, r = 0.1}, nodes={
                     {n=G.UIT.O, config={id = G.GAME.viewed_back.name, func = 'RUN_SETUP_check_back', object = UIBox{definition = G.GAME.viewed_back:generate_UI(), config = {offset = {x=0,y=0}}}}}
                   }}       
@@ -6470,6 +6484,7 @@ function G.UIDEF.run_setup_option(type)
                             {n=G.UIT.R, config={align = "cm", r = 0.1, minw = 4, maxw = 4, minh = 0.6}, nodes={
                               {n=G.UIT.O, config={id = nil, func = 'RUN_SETUP_check_back_name', object = Moveable()}},
                             }},
+                            	c3x_generate_deck_credit_payload(),
                             {n=G.UIT.R, config={align = "cm", colour = G.C.WHITE,padding = 0.03, minh = 1.75, r = 0.1}, nodes={
                               {n=G.UIT.R, config={align = "cm"}, nodes={
                                 {n=G.UIT.C, config={align = "cm", minw = lwidth, maxw = lwidth}, nodes={{n=G.UIT.T, config={text = localize('k_round'),colour = G.C.UI.TEXT_DARK, scale = scale*0.8}}}},
@@ -6515,6 +6530,7 @@ function G.UIDEF.run_setup_option(type)
                                   {n=G.UIT.R, config={align = "cm", r = 0.1, minw = 4, maxw = 4, minh = 0.6}, nodes={
                                     {n=G.UIT.O, config={id = nil, func = 'RUN_SETUP_check_back_name', object = Moveable()}},
                                   }},
+                                  	c3x_generate_deck_credit_payload(),
                                   {n=G.UIT.R, config={align = "cm", colour = G.C.WHITE, minh = 1.7, r = 0.1}, nodes={
                                     {n=G.UIT.O, config={id = G.GAME.viewed_back.name, func = 'RUN_SETUP_check_back', object = UIBox{definition = G.GAME.viewed_back:generate_UI(), config = {offset = {x=0,y=0}}}}}
                                   }}       

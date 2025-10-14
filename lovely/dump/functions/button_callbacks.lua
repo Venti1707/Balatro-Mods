@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'bf16c6819d6788a28890d1a20beeb893f4b2dbe1a0d455366e32ac0cf075ceb2'
+LOVELY_INTEGRITY = 'cd3de22412476b6a7901a7b19a4b57f9389c4e54c5c8c02ee459050afbb1e25b'
 
 --Moves the tutorial to the next step in queue
 --
@@ -2171,7 +2171,7 @@ end
     if e.config.ref_table then 
       e.children.info = UIBox{
         definition = {n=G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, padding = 0.02}, nodes=e.config.ref_table},
-        config = (not e.config.ref_table or not e.config.ref_table[1].config.card_pos or e.config.ref_table[1].config.card_pos > G.ROOM.T.w*0.4) and
+                config = (not e.config.ref_table or not e.config.ref_table[1].config.card_pos or e.config.ref_table[1].config.card_pos > G.ROOM.T.w*0.4 or e.config.ref_table[1].config.credit) and
             {offset = {x=-0.03,y=0}, align = 'cl', parent = e} or
             {offset = {x=0.03,y=0}, align = 'cr', parent = e}
       }
