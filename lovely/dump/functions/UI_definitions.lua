@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '35e125d9a10c3c1e92849731b3f04ebc943b9c1a5f487c75104e8008d0de43b9'
+LOVELY_INTEGRITY = '0aeb54dae59ec8490d011f2d3aad3d6ae30d9818d00c317077de698bd1571028'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -4494,7 +4494,7 @@ function create_UIBox_blind_popup(blind, discovered, vars)
   
   local _dollars = blind.dollars
   local target = {type = 'raw_descriptions', key = blind.key, set = 'Blind', vars = vars or blind.vars}
-  if blind.collection_loc_vars and type(blind.collection_loc_vars) == 'function' then
+  if not vars and blind.collection_loc_vars and type(blind.collection_loc_vars) == 'function' then
       local res = blind:collection_loc_vars() or {}
       target.vars = res.vars or target.vars
       target.key = res.key or target.key
