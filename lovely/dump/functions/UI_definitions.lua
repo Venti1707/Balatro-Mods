@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '72a3ca4c5d9419b5006129ba3d56d17a8c6e6abcb4ee1811beeb146183eca54b'
+LOVELY_INTEGRITY = '2c36ddd3a78f737f6d67c39e74e289b3551eb37de4ffe96e407536d67be7b818'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -2127,7 +2127,7 @@ end
 function create_UIBox_card_alert(args)
   args = args or {}
   return {n=G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, refresh_movement = true}, nodes={
-      {n=G.UIT.R, config={align = "cm", r = 0.15, minw = 0.42, minh = 0.42, colour = args.no_bg and G.C.CLEAR or args.bg_col or (args.red_bad and darken(G.C.RED, 0.1) or G.C.RED), draw_layer = 1, emboss = 0.05, refresh_movement = true}, nodes={
+      {n=G.UIT.R, config={hover = args.hover_alt, button = args.button, button_dist = args.button_dist, ref_table = args.ref_table, focus_args = args.focus_args, align = "cm", r = 0.15, minw = 0.42, minh = 0.42, colour = args.no_bg and G.C.CLEAR or args.bg_col or (args.red_bad and darken(G.C.RED, 0.1) or G.C.RED), draw_layer = 1, emboss = 0.05, refresh_movement = true}, nodes={
         {n=G.UIT.O, config={object = DynaText({string = args.text or '!', colours = {G.C.WHITE},shadow = true, rotate = true,H_offset = args.y_offset or 0,bump_rate = args.text and 3 or 7, bump_amount = args.bump_amount or 3, bump = true,maxw = args.maxw, text_rot = args.text_rot or  0.2, spacing = 3*(args.scale or 1), scale = args.scale or 0.48})}}
       }},
   }}

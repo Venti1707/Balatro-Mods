@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '617189f3e085f0f3f7d64929d2beb676b23ac8f23cb10fe7acbdc50b687becdf'
+LOVELY_INTEGRITY = '280fb8319bd2d22d7c14e971460681cad9dd0da7efcbff04d392383de0aa1b42'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -925,10 +925,17 @@ function set_alerts()
                 if v.should_alert then
                     if not G[v.alert_uibox_name] then 
                         G[v.alert_uibox_name] = UIBox{
-                            definition = create_UIBox_card_alert({red_bad = true}),
+                            definition = create_UIBox_card_alert({
+                              red_bad = true,
+                              hover_alt = true,
+                              button = 'dismissalert_dismiss_collection_alert',
+                              ref_table = v,
+                              button_dist = 0,
+                              focus_args = {type = 'none'}
+                            }),
                             config = {align="tri", offset = {x = 0.05, y = -0.05}, major = G.OVERLAY_MENU:get_UIE_by_ID(v.id), instance_type = 'ALERT'}
                         }
-                        G[v.alert_uibox_name].states.collide.can = false
+
                     end
                 elseif G[v.alert_uibox_name] then 
                     G[v.alert_uibox_name]:remove()
@@ -943,8 +950,20 @@ function set_alerts()
         if G.MAIN_MENU_UI then 
             if alert_any then
                 if not G.collection_alert then 
-                    G.collection_alert = UIBox{definition = create_UIBox_card_alert(), config = {align="tri", offset = {x = 0.05, y = -0.05}, major = G.MAIN_MENU_UI:get_UIE_by_ID('collection_button')}}
-                    G.collection_alert.states.collide.can = false
+                    G.collection_alert = UIBox{
+                      definition = create_UIBox_card_alert({
+                        hover_alt = true,
+                        button = 'dismissalert_dismiss_collection_alert',
+                        ref_table = { id = 'collection', alert_uibox_name = 'collection_alert' },
+                        button_dist = 0,
+                        focus_args = {type = 'none'}
+                      }),
+                      config = {
+                        align="tri",
+                        offset = {x = 0.05, y = -0.05},
+                        major = G.MAIN_MENU_UI:get_UIE_by_ID('collection_button')
+                      }
+                    }
                 end
             elseif G.collection_alert then 
                 G.collection_alert:remove()
