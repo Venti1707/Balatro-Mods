@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'ed267872c9f1ed1986d136bc8cb8f16a2f158ea782b1600deba252a3bc1628a0'
+LOVELY_INTEGRITY = 'a1cf870c378e45b23c227ade5829ca9d137620aca07d5a31d81132f6534f7ca7'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -2398,6 +2398,7 @@ function create_UIBox_options()
   local your_collection = nil
   local credits = nil
   local customize = nil
+  local textures = nil
 
   G.E_MANAGER:add_event(Event({
     blockable = false,
@@ -2435,6 +2436,10 @@ function create_UIBox_options()
   local settings = UIBox_button({button = 'settings', label = {localize('b_settings')}, minw = 5, focus_args = {snap_to = true}})
   local high_scores = UIBox_button{ label = {localize('b_stats')}, button = "high_scores", minw = 5}
   local customize = UIBox_button{ label = {localize('b_customize_deck')}, button = "customize_deck", minw = 5}
+  customize = {n=G.UIT.R, config={minw = 5, align='cl', padding = 0.1}, nodes = {
+      UIBox_button{ label = {localize('b_deck_skins')}, col = true, button = "customize_deck", minw = 2.45},
+      UIBox_button{ label = {localize('b_textures')}, col = true, button = "textures_button", minw = 2.45, align = 'cl', colour = Malverk.badge_colour},
+  }}
 
   local t = create_UIBox_generic_options({ contents = {
       settings,

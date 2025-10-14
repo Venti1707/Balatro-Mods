@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'd492ddce642ebf6f8c70a07845a9afbe9a574c502ea2e15701058b102190b2fe'
+LOVELY_INTEGRITY = '6a3088efe989059480acb3ae887b074fba7d9ad3d2a3adca8ca83aa63d6f79dc'
 
 --class
 Card = Moveable:extend()
@@ -4735,6 +4735,12 @@ function Card:draw(layer)
             end
 
             --If the card is not yet discovered
+            if self.texture_selected then
+                self.children.center:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
+                if self.children.front then
+                    self.children.front:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
+                end
+            end
             if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center then
                 local shared_sprite = (self.ability.set == 'Edition' or self.ability.set == 'Joker') and G.shared_undiscovered_joker or G.shared_undiscovered_tarot
                 local scale_mod = -0.05 + 0.05*math.sin(1.8*G.TIMERS.REAL)
@@ -4830,7 +4836,11 @@ function Card:draw(layer)
                         self.hover_tilt = self.hover_tilt/1.5
                     else
                         self.children.floating_sprite:draw_shader('dissolve',0, nil, nil, self.children.center,scale_mod, rotate_mod,nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL),nil, 0.6)
+                        if self.texture_selected then
+                            self.children.floating_sprite:draw_shader('malverk_texture_selected', nil, nil, nil, self.children.center, scale_mod, rotate_mod)
+                        else
                         self.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, self.children.center, scale_mod, rotate_mod)
+                        end
                     end
                     
                 end
@@ -4884,7 +4894,11 @@ function Card:draw(layer)
         end
 
         for k, v in pairs(self.children) do
+            if self.children.animatedSprite and self.texture_selected then
+                self.children.animatedSprite:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
+            else
             if k ~= 'focused_ui' and k ~= "front" and k ~= "back" and k ~= "soul_parts" and k ~= "center" and k ~= 'floating_sprite' and k~= "shadow" and k~= "use_button" and k ~= 'buy_button' and k ~= 'buy_and_use_button' and k~= "debuff" and k ~= 'price' and k~= 'particles' and k ~= 'h_popup' then v:draw() end
+            end
         end
 
         if (layer == 'card' or layer == 'both') and self.area == G.hand then 
