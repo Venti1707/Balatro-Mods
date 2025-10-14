@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '3014e67ad71ca9de9815523c2f556b83556dfec9c891e77801db497434af9151'
+LOVELY_INTEGRITY = '8e49bcd5c679eba6b48988c072cdfe85bb1bb31c69b5d8376f87256565e520e5'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -106,6 +106,9 @@ function end_round()
             SMODS.saved = false
             G.GAME.saved_text = nil
             SMODS.calculate_context({end_of_round = true, game_over = game_over, beat_boss = G.GAME.blind.boss })
+            for i = 1, #G.GAME.tags do
+                G.GAME.tags[i]:apply_to_run({type = 'ad_end_of_round', game_over = game_over})
+            end
             if SMODS.saved then game_over = false end
             -- TARGET: main end_of_round evaluation
             if G.GAME.round_resets.ante == G.GAME.win_ante and G.GAME.blind:get_type() == 'Boss' then
@@ -732,9 +735,30 @@ function evaluate_play_intro()
 
         -- context.final_scoring_step calculations
         SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, final_scoring_step = true})
+        for i = 1, #G.GAME.tags do
+            G.GAME.tags[i]:apply_to_run({type = 'ad_final_scoring_step'})
+        end
         
         -- TARGET: effects before deck final_scoring_step
         local nu_chip, nu_mult = G.GAME.selected_back:trigger_effect{context = 'final_scoring_step', chips = hand_chips, mult = mult}
+        if G.GAME.ad_halve_scoring then
+            local x_mult = 0.5 ^ G.GAME.ad_halve_scoring
+            nu_mult = (nu_mult or mult) * x_mult
+            update_hand_text({delay = 0}, { mult = nu_mult })
+            
+            G.E_MANAGER:add_event(Event {
+                func = function()
+                    local text = localize({ type = "variable", key = "ad_cracked", vars = { x_mult } })
+                    play_sound('glass'..math.random(1, 6), math.random()*0.2 + 0.9,0.5)
+                    play_sound('tarot1', 1.5)
+                    attention_text({
+                        scale = 1.4, text = text, hold = 2, align = 'cm', offset = {x = 0, y = -2.7}, major = G.play
+                    })
+                    return true
+                end
+            })
+            delay(0.6)
+        end
         mult = mod_mult(nu_mult or mult)
         hand_chips = mod_chips(nu_chip or hand_chips)
 

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'c34cb7edb15a4a2d73860cb43d3a0d38a6e9389a9bf23be476dd5b01716795bf'
+LOVELY_INTEGRITY = 'a3f75c9c1a87aacd38e5f330661d20fb080aebc70b755a6c6cdd89d441b6ff32'
 
 --class
 Card = Moveable:extend()
@@ -1330,7 +1330,16 @@ function Card:get_end_of_round_effect(context)
                             _planet = v.key
                         end
                     end
-                    if _planet == 0 then _planet = nil end
+                    if _planet == 0 then
+                    _planet = AUtils.contains({
+                        "ad_envy",
+                        "ad_gluttony",
+                        "ad_greed",
+                        "ad_lust",
+                        "ad_pride",
+                        "ad_sloth",
+                        "ad_wrath",
+                    }, G.GAME.last_hand_played) and "c_ad_rhea" or nil end
                     local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
                     card:add_to_deck()
                     G.consumeables:emplace(card)
@@ -4545,6 +4554,9 @@ function Card:update(dt)
 
     if self.ability.consumeable and self.ability.consumeable.max_highlighted then
         self.ability.consumeable.mod_num = math.min(5, self.ability.consumeable.max_highlighted)
+        if self.ability.set == "Tarot" then
+            self.ability.consumeable.mod_num = math.min(G.hand and G.hand.config.highlighted_limit or 5, self.ability.consumeable.mod_num + (G.GAME.ad_max_highlight_modifier or 0))
+        end
     end
     local obj = self.config.center
     if obj.update and type(obj.update) == 'function' then

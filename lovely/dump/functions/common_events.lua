@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '44d84bebb1eb177786bc0fe299257f61f503dca00a80460577035e787239fe97'
+LOVELY_INTEGRITY = '05ef9f2d1152f65b1bd49dab1df2707f1f8c7550cfc270b4d24ef477c8a7fe3d'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -3308,23 +3308,23 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
            if not (not fool_c or fool_c.name == 'The Fool') then
                 info_queue[#info_queue+1] = fool_c
            end
-       elseif _c.name == "The Magician" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Magician" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
        elseif _c.name == "The High Priestess" then loc_vars = {cfg.planets}
-       elseif _c.name == "The Empress" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Empress" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
        elseif _c.name == "The Emperor" then loc_vars = {cfg.tarots}
-       elseif _c.name == "The Hierophant" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
-       elseif _c.name == "The Lovers" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
-       elseif _c.name == "The Chariot" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
-       elseif _c.name == "Justice" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Hierophant" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Lovers" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Chariot" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "Justice" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
        elseif _c.name == "The Hermit" then loc_vars = {cfg.extra}
        elseif _c.name == "The Wheel of Fortune" then 
            loc_vars = {SMODS.get_probability_vars(card, 1, cfg.extra, 'wheel_of_fortune')}
            info_queue[#info_queue+1] = G.P_CENTERS.e_foil
            info_queue[#info_queue+1] = G.P_CENTERS.e_holo
            info_queue[#info_queue+1] = G.P_CENTERS.e_polychrome
-       elseif _c.name == "Strength" then loc_vars = {cfg.max_highlighted}
-       elseif _c.name == "The Hanged Man" then loc_vars = {cfg.max_highlighted}
-       elseif _c.name == "Death" then loc_vars = {cfg.max_highlighted}
+       elseif _c.name == "Strength" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0)}
+       elseif _c.name == "The Hanged Man" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0)}
+       elseif _c.name == "Death" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0)}
        elseif _c.name == "Temperance" then
         local _money = 0
         if G.jokers then
@@ -3335,13 +3335,13 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
             end
         end
         loc_vars = {cfg.extra, math.min(cfg.extra, _money)}
-       elseif _c.name == "The Devil" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
-       elseif _c.name == "The Tower" then loc_vars = {cfg.max_highlighted, localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
-       elseif _c.name == "The Star" then loc_vars = {cfg.max_highlighted,  localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
-       elseif _c.name == "The Moon" then loc_vars = {cfg.max_highlighted, localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
-       elseif _c.name == "The Sun" then loc_vars = {cfg.max_highlighted, localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
+       elseif _c.name == "The Devil" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Tower" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize{type = 'name_text', set = 'Enhanced', key = cfg.mod_conv}}; info_queue[#info_queue+1] = G.P_CENTERS[cfg.mod_conv]
+       elseif _c.name == "The Star" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0),  localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
+       elseif _c.name == "The Moon" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
+       elseif _c.name == "The Sun" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
        elseif _c.name == "Judgement" then
-       elseif _c.name == "The World" then loc_vars = {cfg.max_highlighted, localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
+       elseif _c.name == "The World" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
        end
        localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
    end
