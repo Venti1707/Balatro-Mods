@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '8e49bcd5c679eba6b48988c072cdfe85bb1bb31c69b5d8376f87256565e520e5'
+LOVELY_INTEGRITY = '1dfc017f850384570fcf49dc1246f69f243d458e79e6fd2ff7d60d10d50b475c'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -102,16 +102,32 @@ function end_round()
             if to_big(G.GAME.chips) >= to_big(G.GAME.blind.chips) then
                 game_over = false
             end
+                if G.GAME.current_round.advanced_blind then
+                    if G.GAME.aiko_puzzle_win then
+                        game_over = false
+                    else
+                        game_over = true
+                    end
+                elseif G.GAME.akyrs_mathematics_enabled and G.GAME.akyrs_character_stickers_enabled then
+                    if G.GAME.blind and AKYRS.is_value_within_threshold(G.GAME.blind.chips,G.GAME.chips,G.GAME.akyrs_math_threshold) then
+                        game_over = false
+                    else
+                        game_over = true
+                    end
+                end
             -- context.end_of_round calculations
             SMODS.saved = false
             G.GAME.saved_text = nil
             SMODS.calculate_context({end_of_round = true, game_over = game_over, beat_boss = G.GAME.blind.boss })
+            AKYRS.copper_eval_calculation = true
+            SMODS.calculate_context({akyrs_copper_end_of_round = true, game_over = game_over, beat_boss = G.GAME.blind.boss })
+            AKYRS.simple_event_add(function() AKYRS.copper_eval_calculation = nil return true end, 0)
             for i = 1, #G.GAME.tags do
                 G.GAME.tags[i]:apply_to_run({type = 'ad_end_of_round', game_over = game_over})
             end
             if SMODS.saved then game_over = false end
             -- TARGET: main end_of_round evaluation
-            if G.GAME.round_resets.ante == G.GAME.win_ante and G.GAME.blind:get_type() == 'Boss' then
+                        if G.GAME.round_resets.ante == G.GAME.win_ante and G.GAME.blind_on_deck == 'Boss' then
                 game_won = true
                 G.GAME.won = true
             end
@@ -125,11 +141,12 @@ function end_round()
                 G.STATE_COMPLETE = false
             else
                 G.GAME.unused_discards = (G.GAME.unused_discards or 0) + G.GAME.current_round.discards_left
+                        G.GAME.word_todo = nil
                 if G.GAME.blind and G.GAME.blind.config.blind then 
                     discover_card(G.GAME.blind.config.blind)
                 end
 
-                if G.GAME.blind:get_type() == 'Boss' then
+                if G.GAME.blind_on_deck == 'Boss' then
                     local _handname, _played, _order = 'High Card', -1, 100
                     for k, v in pairs(G.GAME.hands) do
                         if v.played > _played or (v.played == _played and _order > v.order) then 
@@ -178,7 +195,7 @@ function end_round()
 
 
                 G.FUNCS.draw_from_hand_to_discard()
-                if G.GAME.blind:get_type() == 'Boss' then
+                if G.GAME.blind_on_deck == 'Boss' then
                     G.GAME.voucher_restock = nil
                     if G.GAME.modifiers.set_eternal_ante and (G.GAME.round_resets.ante == G.GAME.modifiers.set_eternal_ante) then 
                         for k, v in ipairs(G.jokers.cards) do
@@ -198,6 +215,7 @@ function end_round()
                         G.STATE = G.STATES.ROUND_EVAL
                         G.STATE_COMPLETE = false
 
+                        if G.GAME.akyrs_default_blind_handler then
                         if G.GAME.round_resets.blind == G.P_BLINDS.bl_small then
                             G.GAME.round_resets.blind_states.Small = 'Defeated'
                         elseif G.GAME.round_resets.blind == G.P_BLINDS.bl_big then
@@ -210,6 +228,9 @@ function end_round()
                             end
                         end
 
+                        else
+                            AKYRS.blind_handler()
+                        end
                         if G.GAME.round_resets.temp_handsize then G.hand:change_size(-G.GAME.round_resets.temp_handsize); G.GAME.round_resets.temp_handsize = nil end
                         if G.GAME.round_resets.temp_reroll_cost then G.GAME.round_resets.temp_reroll_cost = nil; calculate_reroll_cost(true) end
 
@@ -465,6 +486,7 @@ G.FUNCS.play_cards_from_highlighted = function(e)
     G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
+            SMODS.calculate_context({akyrs_pre_play = true, akyrs_pre_play_cards = G.hand.highlighted})
             G.STATE = G.STATES.HAND_PLAYED
             G.STATE_COMPLETE = true
             return true
@@ -614,8 +636,10 @@ function evaluate_play_intro()
     function evaluate_play_main(text, disp_text, poker_hands, scoring_hand, non_loc_disp_text, percent, percent_delta)
         mult = mod_mult(G.GAME.hands[text].mult)
         hand_chips = mod_chips(G.GAME.hands[text].chips)
+        AKYRS.base_cm_mod(G.play.cards, {text,disp_text,poker_hands,scoring_hand,non_loc_disp_text}, hand_chips, mult, already_ran)
 
         check_for_unlock({type = 'hand', handname = text, disp_text = non_loc_disp_text, scoring_hand = scoring_hand, full_hand = G.play.cards})
+        local already_ran = true
 
         delay(0.4)
 
@@ -634,6 +658,7 @@ function evaluate_play_intro()
 
         mult = mod_mult(G.GAME.hands[text].mult)
         hand_chips = mod_chips(G.GAME.hands[text].chips)
+        AKYRS.base_cm_mod(G.play.cards, {text,disp_text,poker_hands,scoring_hand,non_loc_disp_text}, hand_chips, mult, already_ran)
 
         local modded = false
 
@@ -960,7 +985,23 @@ G.FUNCS.evaluate_round = function()
         pitch = pitch + 0.06
         dollars = dollars + G.GAME.blind.dollars
     else
+        local should_win = false
+        if G.GAME.blind.debuff.special_blind and G.GAME.aiko_puzzle_win then
+            if G.GAME.aiko_puzzle_win then
+                --print("win")
+                should_win = true
+            end
+        elseif G.GAME.akyrs_mathematics_enabled and G.GAME.akyrs_character_stickers_enabled then
+            if (G.GAME.blind and AKYRS.is_value_within_threshold(G.GAME.blind.chips, G.GAME.chips, G.GAME.akyrs_math_threshold)) or AKYRS.compare(G.GAME.current_round.hands_left,"<",1) or AKYRS.does_hand_only_contain_symbols(G.hand) then
+                should_win = true
+            end
+        end
+        if should_win then 
+            add_round_eval_row({dollars = G.GAME.blind.dollars, name='blind1', pitch = pitch})
+            dollars = dollars + G.GAME.blind.dollars
+        else
         add_round_eval_row({dollars = 0, name='blind1', pitch = pitch, saved = true})
+        end
         pitch = pitch + 0.06
     end
 

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '9256c2e13540c7e2e5b16f38af0e6c77a7518c4726c0d02b4e0abf024fee9065'
+LOVELY_INTEGRITY = '11347830fd091dfed220811de18978a796ae58c3c4b5a1abac20c8a1d6192791'
 
 --- STEAMODDED CORE
 --- UTILITY FUNCTIONS
@@ -1920,6 +1920,7 @@ function SMODS.calculate_main_scoring(context, scoring_hand)
                     func = (function() SMODS.juice_up_blind();return true end)
                 }))
                 card_eval_status_text(card, 'debuff')
+                SMODS.score_card(card, context)
             end
         else
             if scoring_hand then
@@ -2102,6 +2103,7 @@ function SMODS.eval_individual(individual, context)
     local ret = {}
     local post_trig = {}
 
+    if not individual or not individual.object then SMODS.pop_from_context_stack(context, "utils.lua : SMODS.eval_individual") return ret, post_trig end
     local eff, triggered = individual.object:calculate(context)
     if eff == true then eff = { remove = true } end
     if type(eff) ~= 'table' then eff = nil end
@@ -2911,6 +2913,12 @@ function SMODS.localize_perma_bonuses(specific_vars, desc_nodes)
     end
     if specific_vars and specific_vars.bonus_h_dollars then
         localize{type = 'other', key = 'card_extra_h_dollars', nodes = desc_nodes, vars = {SMODS.signed_dollars(specific_vars.bonus_h_dollars)}}
+    end
+    if specific_vars and specific_vars.akyrs_perma_score then
+        localize{type = 'other', key = 'akyrs_perma_score', nodes = desc_nodes, vars = {SMODS.signed(specific_vars.akyrs_perma_score)}}
+    end
+    if specific_vars and specific_vars.akyrs_perma_h_score then
+        localize{type = 'other', key = 'akyrs_perma_h_score', nodes = desc_nodes, vars = {SMODS.signed(specific_vars.akyrs_perma_h_score)}}
     end
     if specific_vars and specific_vars.bonus_repetitions then
         localize{type = 'other', key = 'card_extra_repetitions', nodes = desc_nodes, vars = {specific_vars.bonus_repetitions, localize(specific_vars.bonus_repetitions > 1 and 'b_retrigger_plural' or 'b_retrigger_single')}}

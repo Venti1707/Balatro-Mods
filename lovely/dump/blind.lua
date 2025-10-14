@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '0ea9666bb6243d5c77dfcfec35654d161d509d568615b7070bc0d5e8b0302d3c'
+LOVELY_INTEGRITY = 'b1633a2563cb69af8352e7721e28ec110c4d0a3966981b6c8508bc9ff21e8f08'
 
 --class
 Blind = Moveable:extend()
@@ -115,6 +115,7 @@ function Blind:set_blind(blind, reset, silent)
         end
 
         self.chips = get_blind_amount(G.GAME.round_resets.ante)*self.mult*G.GAME.starting_params.ante_scaling
+        self.chips = AKYRS.mod_blind_requirement(self,self.chips)
         self.chip_text = number_format(self.chips)
 
         if not blind then self.chips = 0 end
@@ -143,6 +144,10 @@ function Blind:set_blind(blind, reset, silent)
                             G.HUD_blind:get_UIE_by_ID("dollars_to_be_earned").parent.parent.states.visible = true
                             G.HUD_blind:get_UIE_by_ID("dollars_to_be_earned").config.object:pop_in(0)
                             G.HUD_blind:get_UIE_by_ID("HUD_blind_name").config.object:pop_in(0)
+                            local akyrs_blind_thing = G.HUD_blind:get_UIE_by_ID("akyrs_blind_attributes")
+                            if akyrs_blind_thing then
+                                akyrs_blind_thing.states.visible = true
+                            end
                             G.HUD_blind:get_UIE_by_ID("HUD_blind_count"):juice_up()
                             self.children.animatedSprite:set_sprite_pos(self.config.blind.pos)
                             self.blind_set = true

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '05ef9f2d1152f65b1bd49dab1df2707f1f8c7550cfc270b4d24ef477c8a7fe3d'
+LOVELY_INTEGRITY = '15c5c4c74a0fbf2a767537b8aa55b06e7cd04a5b8b235afa31cba600909b1d3f'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -56,7 +56,7 @@ function ease_chips(mod)
                 ref_value = 'chips',
                 ease_to = mod,
                 delay =  0.3,
-                func = (function(t) return math.floor(t) end)
+                func = (function(t) return AKYRS.adjust_rounding(t) end)
             }))
             --Popup text next to the chips in UI showing number of chips gained/lost
                 chip_UI:juice_up()
@@ -746,6 +746,11 @@ function eval_card(card, context)
             ret.playing_card.x_chips = x_chips
         end
     
+        
+        local akyrs_score = card:akyrs_get_perma_score()
+        if akyrs_score ~= 0 then
+            ret.playing_card.akyrs_score = akyrs_score
+        end
         local perma_retriggers = card:get_perma_retriggers()
         if perma_retriggers ~= 0 then
             ret.playing_card.perma_retriggers = perma_retriggers
@@ -781,6 +786,10 @@ function eval_card(card, context)
             ret.playing_card.x_chips = h_x_chips
         end
     
+        local akyrs_h_score = card:akyrs_get_perma_h_score()
+        if akyrs_h_score ~= 0 then
+            ret.playing_card.akyrs_h_score = akyrs_h_score
+        end
         -- TARGET: main scoring on held cards
     end
 
@@ -1016,7 +1025,12 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
     local trigger = 'before'
     local blocking = nil
     local blockable = nil
-    local card_aligned = 'bm'
+        local card_aligned = 'bm'
+        if extra and extra.card_align then card_aligned = extra.card_align end
+        local card_trigger_before = false
+        if extra and extra.card_trigger_before then card_trigger_before = extra.card_trigger_before end
+        local card_trigger = 'before'
+        if extra and extra.card_trigger then card_trigger = extra.card_trigger end
     local y_off = 0.15*G.CARD_H
     if card.area == G.jokers or card.area == G.consumeables then
         y_off = 0.05*card.T.h
@@ -1065,7 +1079,7 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
             sound = 'xchips'
             volume = 0.7
             amt = amt
-            text = localize{type='variable',key='a_xchips'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
+                        text = Talisman and localize{type='variable',key='a_xchips'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}} or localize{type='variable',key='a_xchips'..(to_big(amt)<to_big(0) and '_minus' or ''),vars={math.abs(amt)}}
             colour = G.C.BLUE
             config.type = 'fade'
             config.scale = 0.7
@@ -1159,6 +1173,9 @@ function card_eval_status_text(card, eval_type, amt, percent, dir, extra)
         colour = G.C.PURPLE
     elseif eval_type == 'extra' or eval_type == 'jokers' then 
         sound = extra.edition and 'foil2' or extra.mult_mod and 'multhit1' or extra.Xmult_mod and 'multhit2' or extra.Xchip_mod and 'talisman_xchip' or extra.Echip_mod and 'talisman_echip' or extra.Emult_mod and 'talisman_emult' or extra.EEchip_mod and 'talisman_eechip' or extra.EEmult_mod and 'talisman_eemult' or (extra.EEEchip_mod or extra.hyperchip_mod) and 'talisman_eeechip' or (extra.EEEmult_mod or extra.hypermult_mod) and 'talisman_eeemult' or 'generic1'
+        if extra.akyrs_no_sound then
+            sound = nil
+        end
         if extra.edition then 
             colour = G.C.DARK_EDITION
         end
@@ -1245,6 +1262,7 @@ function add_round_eval_row(config)
     local num_dollars = config.dollars or 1
     local scale = 0.9
 
+    num_dollars = AKYRS.setCashOutDollars(config,scale,stake_sprite, num_dollars) or num_dollars
     if config.name ~= 'bottom' then
         total_cashout_rows = (total_cashout_rows or 0) + 1
         if total_cashout_rows > 7 then
@@ -1285,6 +1303,10 @@ function add_round_eval_row(config)
                         {shader = 'dissolve'}
                     })
                     table.insert(left_text, {n=G.UIT.O, config={w=1.2,h=1.2 , object = blind_sprite, hover = true, can_collide = false}})
+                    local akyrs_cashouttxt = AKYRS.getCashOutText(config,scale, stake_sprite, num_dollars)
+                    if akyrs_cashouttxt then
+                        table.insert(left_text, akyrs_cashouttxt) 
+                    else
   
                     table.insert(left_text,                  
                     config.saved and 
@@ -1302,6 +1324,7 @@ function add_round_eval_row(config)
                             {n=G.UIT.T, config={text = G.GAME.blind.chip_text, scale = scale_number(G.GAME.blind.chips, scale, 100000), colour = G.C.RED, shadow = true}}
                         }}
                     }}) 
+                        end
                 elseif string.find(config.name, 'tag') then
                     local blind_sprite = Sprite(0, 0, 0.7,0.7, G.ASSET_ATLAS['tags'], copy_table(config.pos))
                     blind_sprite:define_draw_steps({
@@ -2417,8 +2440,25 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
                         end
                     end
                 elseif v.set == 'Planet' then
+                
+                local softlocked = true
+                
+                if v.config.akyrs_hand_types then
+                    add = false
+                    for _, h in pairs(v.config.akyrs_hand_types) do
+                        if G.GAME.hands[h].played > 0 then
+                            softlocked = false
+                        end
+                    end
+                end
+                
+                if not softlocked then
+                    add = true
+                end
+                    if v.config.hand_type then
                     if (not v.config.softlock or G.GAME.hands[v.config.hand_type].played > 0) then
                         add = true
+                    end
                     end
                 elseif v.enhancement_gate then
                     add = nil
@@ -2441,6 +2481,7 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
             if v.in_pool and type(v.in_pool) == 'function' then
                 add = in_pool and (add or pool_opts.override_base_checks)
             end
+            if G.GAME and G.GAME.modifiers.akyrs_allow_duplicates and v.unlocked then add = true end
             if add and not G.GAME.banned_keys[v.key] then 
                 -- If the selected deck is the Aid deck and this key is a Modded Joker, add copies of it
                 -- to the pool, so that it is more common to get
@@ -2989,6 +3030,18 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
         desc_nodes = full_UI_table.info[#full_UI_table.info]
     end
 
+    local akyrs_should_conceal = false
+    if _c and AKYRS.should_conceal_card(card, _c) then
+        local _c2 = {}
+        for k, v in pairs(_c) do
+            _c2[k] = v
+        end
+        _c2.key = "j_hatena"
+        _c2.generate_ui = nil
+        _c2.set = "DescriptionDummy"
+        akyrs_should_conceal = true
+        _c = _c2
+    end
     if not full_UI_table.name then
         if specific_vars and specific_vars.no_name then
             full_UI_table.name = true
@@ -3000,7 +3053,11 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
             if _c.name == 'Stone Card' or _c.replace_base_card then full_UI_table.name = true
             elseif specific_vars.playing_card then
                 full_UI_table.name = {}
+                if AKYRS.should_playing_card_loc_hooks(_c,card) then
+                    AKYRS.playing_card_loc_hooks(_c,full_UI_table,specific_vars,card)
+                else
                 localize{type = 'other', key = 'playing_card', set = 'Other', nodes = full_UI_table.name, vars = {localize(specific_vars.value, 'ranks'), localize(specific_vars.suit, 'suits_plural'), colours = {specific_vars.colour}}}
+                end
                 full_UI_table.name = full_UI_table.name[1]
             end
         elseif card_type == 'Booster' then
@@ -3202,19 +3259,24 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
             card.generate_ds_card_ui(card, card.deckskin, card.palette, info_queue, desc_nodes, specific_vars, full_UI_table)
         else
             if specific_vars.nominal_chips then
+                if AKYRS.should_score_chips(_c, card) then
                 localize{type = 'other', key = 'card_chips', nodes = desc_nodes, vars = {specific_vars.nominal_chips}}
+                end
             end
             if specific_vars.bonus_chips then
                 localize{type = 'other', key = 'card_extra_chips', nodes = desc_nodes, vars = {SMODS.signed(specific_vars.bonus_chips)}}
             end
         end
     SMODS.localize_perma_bonuses(specific_vars, desc_nodes)
+    AKYRS.mod_card_displays(_c,card,desc_nodes,specific_vars)
     if specific_vars and specific_vars.bonus_retriggers then
         localize{type = 'other', key = 'card_extra_retriggers', nodes = desc_nodes, vars = {specific_vars.bonus_retriggers}}
     end
     elseif _c.set == 'Enhanced' then 
         if specific_vars and _c.name ~= 'Stone Card' and specific_vars.nominal_chips then
+            if AKYRS.should_score_chips(_c, card) then
             localize{type = 'other', key = 'card_chips', nodes = desc_nodes, vars = {specific_vars.nominal_chips}}
+            end
         end
         if _c.effect == 'Mult Card' then loc_vars = {SMODS.signed(cfg.mult + (specific_vars and specific_vars.bonus_mult or 0))}
         elseif _c.effect == 'Wild Card' then
@@ -3344,6 +3406,66 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
        elseif _c.name == "The World" then loc_vars = {cfg.max_highlighted + (G.GAME.ad_max_highlight_modifier or 0), localize(cfg.suit_conv, 'suits_plural'), colours = {G.C.SUITS[cfg.suit_conv]}}
        end
        localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+           
+       elseif _c.set == 'AikoyoriExtraBases' then
+           local x_loc_vars = _c.vars or loc_vars
+           if card and card.is_null and (card.ability.set == "Enhanced" or card.ability.set == "Default") then
+               local gend = false
+               local last_letter = string.lower(string.sub(x_loc_vars[1], -1))
+               local xkey = nil
+               if(AKYRS.non_letter_symbols_reverse[last_letter]) then
+                   xkey = "symbols"
+               end
+               if(tonumber(last_letter)) then
+                   xkey = "numbers"
+               end
+               if not key then
+                   if (G.GAME.akyrs_letters_mult_enabled) then
+                       localize{type = 'descriptions', key = "lettersMult", set = _c.set, vars = _c.vars or loc_vars}
+                       gend = true
+                   end
+                   if (G.GAME.akyrs_letters_xmult_enabled) then
+                       localize{type = 'descriptions', key = "lettersXMult", set = _c.set, vars = _c.vars or loc_vars}
+                       gend = true
+                   end
+               end
+               if((_c.vars or loc_vars)[4]) then
+                   localize{type = 'descriptions', key = "letterCardFrequency", set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+               end
+               if not gend then
+                   full_UI_table.name = localize{type = 'name', set = _c.set, nodes = full_UI_table.name,  key = xkey or "letters", vars = _c.vars or loc_vars}
+               end
+               localize{type = 'other', key = 'null_card', nodes = desc_nodes, vars = _c.vars or loc_vars}
+           else
+               if x_loc_vars[1] and string.sub(x_loc_vars[1], -1) then
+                   local last_letter = string.lower(string.sub(x_loc_vars[1], -1))
+                   local key = "letters"
+                   if(AKYRS.non_letter_symbols_reverse[last_letter]) then
+                       key = "symbols"
+                   end
+                   if(tonumber(last_letter)) then
+                       key = "numbers"
+                   end
+                   localize{type = 'descriptions', key = key , set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+               else 
+                   localize{type = 'descriptions', key = "null_card", set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+               end
+               
+               if(G.GAME.akyrs_letters_mult_enabled or G.GAME.akyrs_letters_xmult_enabled) then
+                   if(G.GAME.akyrs_letters_mult_enabled) then
+                       localize{type = 'descriptions', key = "lettersMult", set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+                   end
+                   
+                   if(G.GAME.akyrs_letters_xmult_enabled) then
+                       localize{type = 'descriptions', key = "lettersXMult", set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+                   end
+               end
+               if((_c.vars or loc_vars)[4]) then
+                   localize{type = 'descriptions', key = "letterCardFrequency", set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
+               end
+           end
+       elseif _c.set == 'DescriptionDummy' then
+           localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
    end
 
     if main_end then 
@@ -3456,6 +3578,9 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
     end
 
     SMODS.compat_0_9_8.generate_UIBox_ability_table_card = nil
+    if _c and akyrs_should_conceal and AKYRS.should_conceal_card(card, _c) then
+        info_queue = {}
+    end
     for _, v in ipairs(info_queue) do
         generate_card_ui(v, full_UI_table, {is_info_queue = true})
     end

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'cd3de22412476b6a7901a7b19a4b57f9389c4e54c5c8c02ee459050afbb1e25b'
+LOVELY_INTEGRITY = 'f1cf716171dccf48f125a1e843cba002039bcbc155716be88269312bf05c8c7b'
 
 --Moves the tutorial to the next step in queue
 --
@@ -470,7 +470,7 @@ end
 function G.FUNCS.toggle_button(e)
   e.config.ref_table.ref_table[e.config.ref_table.ref_value] = not e.config.ref_table.ref_table[e.config.ref_table.ref_value]
   if e.config.toggle_callback then 
-    e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value])
+        e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value], e) -- patched by aikyoori lmaooo
   end
 end
 
@@ -2221,7 +2221,9 @@ end
     end
     if G.shop and not G.shop.alignment.offset.py then
       G.shop.alignment.offset.py = G.shop.alignment.offset.y
+      if G.shop then
       G.shop.alignment.offset.y = G.ROOM.T.y + 29
+      end
     end
     if G.blind_select and not G.blind_select.alignment.offset.py then
       G.blind_select.alignment.offset.py = G.blind_select.alignment.offset.y
@@ -2541,7 +2543,9 @@ end
       G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
+          if G.shop then
           G.shop.alignment.offset.y = G.ROOM.T.y + 29
+          end
           G.SHOP_SIGN.alignment.offset.y = -15
           return true
         end
@@ -2991,7 +2995,11 @@ G.FUNCS.cash_out = function(e)
               G.GAME.current_round.jokers_purchased = 0
               G.GAME.current_round.discards_left = math.max(0, G.GAME.round_resets.discards + G.GAME.round_bonus.discards)
               G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
+              if G.GAME.akyrs_always_skip_shops then
+                  G.STATE = G.STATES.BLIND_SELECT
+              else
               G.STATE = G.STATES.SHOP
+              end
               G.GAME.shop_free = nil
               G.GAME.shop_d6ed = nil
               G.STATE_COMPLETE = false

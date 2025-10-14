@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'c421509963ffe4578234204dbbb12472098a9274db27e7002fe7f330d2aff91c'
+LOVELY_INTEGRITY = 'c8a75bb93483d4d167b3da970f0941b4a36da414c08628b1d9b02f60b42f50b5'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -1340,6 +1340,24 @@ function set_consumeable_usage(card)
         G.GAME.consumeable_usage[card.config.center_key] = {count = 1, order = card.config.center.order, set = card.ability.set}
       end
       G.GAME.consumeable_usage_total = G.GAME.consumeable_usage_total or {tarot = 0, planet = 0, spectral = 0, tarot_planet = 0, all = 0}
+      G.GAME.consumeable_usage_total.akyrs_umbral = G.GAME.consumeable_usage_total.akyrs_umbral or 0
+      if card.config.center.set == 'Umbral' then 
+      G.GAME.consumeable_usage_total = G.GAME.consumeable_usage_total or {}
+      G.GAME.consumeable_usage_total.akyrs_umbral = (G.GAME.consumeable_usage_total.akyrs_umbral or 0) + 1
+      G.E_MANAGER:add_event(Event({
+              trigger = 'immediate',
+              func = function()
+              G.E_MANAGER:add_event(Event({
+              trigger = 'immediate',
+              func = function()
+              G.GAME.akyrs_last_umbral = card.config.center_key
+                      return true
+              end
+              }))
+              return true
+              end
+      }))
+      end
       if card.config.center.set == 'Tarot' then
         G.GAME.consumeable_usage_total.tarot = G.GAME.consumeable_usage_total.tarot + 1  
         G.GAME.consumeable_usage_total.tarot_planet = G.GAME.consumeable_usage_total.tarot_planet + 1
@@ -1682,6 +1700,14 @@ function loc_colour(_c, _default)
       for _, v in ipairs(SMODS.Suit.obj_buffer) do
           G.ARGS.LOC_COLOURS[v:lower()] = G.C.SUITS[v]
       end
+  G.ARGS.LOC_COLOURS.akyrs_playable = G.C.AKYRS_PLAYABLE
+  G.ARGS.LOC_COLOURS.akyrs_pissandshittium = G.C.AKYRS_PISSANDSHITTIUM
+  G.ARGS.LOC_COLOURS.akyrs_bocchi = G.C.AKYRS_BOCCHI
+  G.ARGS.LOC_COLOURS.akyrs_kita = G.C.AKYRS_KITA
+  G.ARGS.LOC_COLOURS.akyrs_nijika = G.C.AKYRS_NIJIKA
+  G.ARGS.LOC_COLOURS.akyrs_ryou = G.C.AKYRS_RYOU
+  G.ARGS.LOC_COLOURS.akyrs_umbral_p = G.C.AKYRS_UMBRAL_P
+  G.ARGS.LOC_COLOURS.akyrs_umbral_y = G.C.AKYRS_UMBRAL_Y
   return G.ARGS.LOC_COLOURS[_c] or _default or G.C.UI.TEXT_DARK
 end
 
@@ -1808,11 +1834,17 @@ end
 function loc_parse_string(line)
   local parsed_line = {}
   local control = {}
+  local is_escaping = false
   local _c, _c_name, _c_val, _c_gather = nil, nil, nil, nil
   local _s_gather, _s_ref = nil, nil
   local str_parts, str_it = {}, 1
   for i = 1, #line do
       local char = line:sub(i,i)
+      if char == '\\' then
+          is_escaping = true
+          goto akyrs_loc_escape_continue
+      end
+      if not is_escaping then
       if char == '{' then --Start of a control section, extract all controls
         if str_parts[1] then parsed_line[#parsed_line+1] = {strings = str_parts, control = control or {}} end
         str_parts, str_it = {}, 1
@@ -1829,6 +1861,11 @@ function loc_parse_string(line)
       elseif not _c and char == '#' and _s_gather then _s_gather = nil; if _s_ref then str_parts[str_it] = {_s_ref}; str_it = str_it + 1; _s_ref = nil end
       elseif not _c and _s_gather then _s_ref = (_s_ref or '')..char
       end
+      else
+          str_parts[str_it] = (str_parts[str_it] or '')..(char)
+          is_escaping = false
+      end
+      ::akyrs_loc_escape_continue::
       if i == #line then
         if str_parts[1] then parsed_line[#parsed_line+1] = {strings = str_parts, control = control or {}} end
         return parsed_line

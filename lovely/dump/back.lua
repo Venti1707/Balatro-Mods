@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '90b1d07ab8d39287199be8d21cffcffc5968271b48b011b464ae95e79edab216'
+LOVELY_INTEGRITY = '34a2489708eb8c5084ac5080d90f4b9cccea60aa4046396e601876578e769194'
 
 --Class
 Back = Object:extend()
@@ -32,7 +32,11 @@ function Back:generate_UI(other, ui_scale, min_dims, challenge)
     local back_config = other or self.effect.center
     local name_to_check = other and other.name or self.name
     local effect_config = other and other.config  or self.effect.config
+    local old_challenge = challenge
     challenge = G.CHALLENGES[get_challenge_int_from_id(challenge or '') or ''] or {name = 'ERROR'}
+    if name_to_check == "Hardcore Challenge Deck" then
+        challenge = AKYRS.HC_CHALLENGES[AKYRS.get_hc_challenge_int_from_id(old_challenge or '')] or {name = 'ERROR'}
+    end
 
     local loc_args, loc_nodes = nil, {}
 
@@ -94,6 +98,12 @@ function Back:generate_UI(other, ui_scale, min_dims, challenge)
         localize{type = 'descriptions', key = key_override or back_config.key, set = 'Back', nodes = loc_nodes, vars = loc_args}
     end
 
+    if name_to_check == "Hardcore Challenge Deck" then
+        return 
+        {n=G.UIT.ROOT, config={align = "cm", minw = min_dims*5, minh = min_dims*2.5, id = self.name, colour = G.C.CLEAR}, nodes={
+            UIBox_button({button = 'akyrs_hc_challenge_deck_view_challenge', label = {localize(challenge.id, 'hardcore_challenge_names')},  minw = 2.2, minh = 1, scale = 0.6, id = challenge})
+        }}
+    end
     return 
     {n=G.UIT.ROOT, config={align = "cm", minw = min_dims*5, minh = min_dims*2.5, id = self.name, colour = G.C.CLEAR}, nodes={
         name_to_check == 'Challenge Deck' and UIBox_button({button = 'deck_view_challenge', label = {localize(challenge.id, 'challenge_names')},  minw = 2.2, minh = 1, scale = 0.6, id = challenge})
