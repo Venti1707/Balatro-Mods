@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'c8a75bb93483d4d167b3da970f0941b4a36da414c08628b1d9b02f60b42f50b5'
+LOVELY_INTEGRITY = 'f5a4b5584565678a1e0c99c1d7d4d19af8e7e24c8ec8256a0f9607896c7effbb'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -621,7 +621,7 @@ function get_straight(hand)
 
     local straight_length = 0
     local straight = false
-    local can_skip = next(find_joker('Shortcut')) 
+    local can_skip = next(find_joker('Shortcut')) or next(find_joker('Four Finger Discount'))
     local skipped_rank = false
     for j = 1, 14 do
       if IDS[j == 1 and 14 or j] then

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '11347830fd091dfed220811de18978a796ae58c3c4b5a1abac20c8a1d6192791'
+LOVELY_INTEGRITY = '55140878ddf61b2043989347098a5b75b6565936f8af4103c0662ce76c27cd13'
 
 --- STEAMODDED CORE
 --- UTILITY FUNCTIONS
@@ -1385,6 +1385,9 @@ SMODS.trigger_effects = function(effects, card)
             SMODS.calculate_effect_table_key(effect_table, key, card, ret)
         end
         SMODS.calculate_effect_table_key(effect_table, 'individual', card, ret)
+        for _, key in ipairs(Bakery_API.tag_effect_names) do
+            SMODS.calculate_effect_table_key(effect_table, key, card, ret)
+        end
         -- todo: might want to move these keys to a customizable list/lists
     end
 
@@ -2067,6 +2070,7 @@ function SMODS.get_card_areas(_type, _context)
     end
     if _type == 'jokers' then
         local t = {G.jokers, G.consumeables, G.vouchers}
+        t[#t + 1] = G.Bakery_charm_area
         -- TARGET: add your own CardAreas for joker evaluation
         return t
     end

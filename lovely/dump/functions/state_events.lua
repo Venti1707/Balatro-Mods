@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '3d752a4e0d77e670c444e07bdda3f68a300691b2e44fb7140e8bf9cddf5cfeff'
+LOVELY_INTEGRITY = 'cf9aeabf2a04a489731263bb816cdd878ea20118c20cf3f58c4eed9b08c44d5b'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -221,6 +221,7 @@ function end_round()
                         elseif G.GAME.round_resets.blind == G.P_BLINDS.bl_big then
                             G.GAME.round_resets.blind_states.Big = 'Defeated'
                         else
+                            G.GAME.current_round.Bakery_charm = Bakery_API.get_next_charms()
                             G.GAME.current_round.voucher = SMODS.get_next_vouchers()
                             G.GAME.round_resets.blind_states.Boss = 'Defeated'
                             for k, v in ipairs(G.playing_cards) do
@@ -304,6 +305,7 @@ function new_round()
             SMODS.calculate_context({setting_blind = true, blind = G.GAME.round_resets.blind})
             
             -- TARGET: setting_blind effects
+            Bakery_API.on_set_blind(G.GAME.blind)
             delay(0.4)
 
             G.E_MANAGER:add_event(Event({
@@ -1056,19 +1058,18 @@ G.FUNCS.evaluate_round = function()
             dollars = dollars + ret.dollars
         end
     end
-    if to_big(G.GAME.dollars) >= to_big(5) and not G.GAME.modifiers.no_interest then
-        add_round_eval_row({bonus = true, name='interest', pitch = pitch, dollars = G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)})
+    if to_big(G.GAME.dollars) >= Bakery_API.interest_scale() and not G.GAME.modifiers.no_interest then
+        add_round_eval_row({bonus = true, name='interest', pitch = pitch, dollars = G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/Bakery_API.interest_scale()), G.GAME.interest_cap/5)})
         pitch = pitch + 0.06
         if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
-            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5) == G.GAME.interest_amount*G.GAME.interest_cap/5 then 
+            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/Bakery_API.interest_scale()), G.GAME.interest_cap/5) == G.GAME.interest_amount*G.GAME.interest_cap/5 then 
                 G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak + 1
             else
                 G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = 0
             end
         end
         check_for_unlock({type = 'interest_streak'})
-        dollars = dollars + G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)
-        dollars = math.floor(dollars + 0.5)
+        dollars = dollars + G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/Bakery_API.interest_scale()), G.GAME.interest_cap/5)
     end
 
     pitch = pitch + 0.06

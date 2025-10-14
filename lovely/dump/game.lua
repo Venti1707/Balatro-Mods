@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '7b0b4020dd7142721b49e7abaf074e65a3c00d9eb6e24cf799c7e879de43a51c'
+LOVELY_INTEGRITY = 'c88082b89c54f2c990be0664ba11e3838cc2c6665621aa2632dbe6b3ecf50190'
 
 --Class
 Game = Object:extend()
@@ -2364,6 +2364,7 @@ function Game:start_run(args)
     }
 
 
+    Bakery_API.create_charm_area()
     self.consumeables = CardArea(
         0, 0,
         CAI.consumeable_W,
@@ -3352,6 +3353,7 @@ function Game:update_shop(dt)
                                         end
                                         G.load_shop_vouchers = nil
                                     else
+                                        Bakery_API.add_charms_to_shop()
                                         local vouchers_to_spawn = 0
                                         for _,_ in pairs(G.GAME.current_round.voucher.spawn) do vouchers_to_spawn = vouchers_to_spawn + 1 end
                                         if vouchers_to_spawn < G.GAME.starting_params.vouchers_in_shop + (G.GAME.modifiers.extra_vouchers or 0) then

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f6702fc2bd2680678959c5ab739f8db0d005ae73e57b1a3e9e0f9738bda0edae'
+LOVELY_INTEGRITY = '1bf87dfe61417046069716ea33f63b5a7b915ad3db0aa0feecaca50c95d64a2b'
 
 SMODS.DrawSteps = {}
 SMODS.DrawStep = SMODS.GameObject:extend {
@@ -159,7 +159,7 @@ SMODS.DrawStep {
         end
 
          --If the card is not yet discovered
-         if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center then
+         if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center and (self.ability.set ~= "BakeryCharm" or self.config.center.unlocked) then
             local shared_sprite = (self.ability.set == 'Edition' or self.ability.set == 'Joker') and G.shared_undiscovered_joker or G.shared_undiscovered_tarot
             local scale_mod = -0.05 + 0.05*math.sin(1.8*G.TIMERS.REAL)
             local rotate_mod = 0.03*math.sin(1.219*G.TIMERS.REAL)

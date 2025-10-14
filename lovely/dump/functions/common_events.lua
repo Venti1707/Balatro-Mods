@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '15c5c4c74a0fbf2a767537b8aa55b06e7cd04a5b8b235afa31cba600909b1d3f'
+LOVELY_INTEGRITY = '047afbce5e48ee57192723f6cc16965087d03aaba11b5b1bdcb809f762771e2a'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -405,7 +405,7 @@ function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped
                 if card and to == G.hand and not card.states.visible then
                     card.states.visible = true
                 end
-                local stay_flipped = G.GAME and G.GAME.blind and G.GAME.blind:stay_flipped(to, card, from)
+                local stay_flipped = stay_flipped or G.GAME and G.GAME.blind and G.GAME.blind:stay_flipped(to, card, from)
                 if G.GAME.modifiers.flipped_cards and to == G.hand then
                     if pseudorandom(pseudoseed('flipped_card')) < 1/G.GAME.modifiers.flipped_cards then
                         stay_flipped = true
@@ -1347,7 +1347,7 @@ function add_round_eval_row(config)
                     table.insert(left_text, {n=G.UIT.O, config={object = DynaText({string = localize{type = 'name_text', set = config.card.config.center.set, key = config.card.config.center.key}, colours = {G.C.FILTER}, shadow = true, pop_in = 0, scale = 0.6*scale, silent = true})}})
                 elseif config.name == 'interest' then
                     table.insert(left_text, {n=G.UIT.T, config={text = num_dollars, scale = 0.8*scale, colour = G.C.MONEY, shadow = true, juice = true}})
-                    table.insert(left_text,{n=G.UIT.O, config={object = DynaText({string = {" "..localize{type = 'variable', key = 'interest', vars = {G.GAME.interest_amount, 5, G.GAME.interest_amount*G.GAME.interest_cap/5}}}, colours = {G.C.UI.TEXT_LIGHT}, shadow = true, pop_in = 0, scale = 0.4*scale, silent = true})}})
+                    table.insert(left_text,{n=G.UIT.O, config={object = DynaText({string = {" "..localize{type = 'variable', key = 'interest', vars = {G.GAME.interest_amount, Bakery_API.interest_scale(true), G.GAME.interest_amount*G.GAME.interest_cap/5}}}, colours = {G.C.UI.TEXT_LIGHT}, shadow = true, pop_in = 0, scale = 0.4*scale, silent = true})}})
                 end
                 local full_row = {n=G.UIT.R, config={align = "cm", minw = 5}, nodes={
                     {n=G.UIT.C, config={padding = 0.05, minw = width*0.55, minh = 0.61, align = "cl"}, nodes=left_text},

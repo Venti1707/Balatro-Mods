@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '0d077fa7a65627485a4e2102be2a5304e9335b29f0d784ab2603b688c5ff268e'
+LOVELY_INTEGRITY = 'd24d1810888af53401c3caf550fa6a2ddd96632c116091adf658357e96e26678'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -409,6 +409,12 @@ function G.UIDEF.card_focus_ui(card)
       card = card, parent = base_attach, type = 'buy',
       func = 'can_buy', button = 'buy_from_shop', card_width = card_width, buy_and_use = buy_and_use
     }
+  end
+  if card.area == G.shop_vouchers and G.shop_vouchers then
+      base_attach.children.use_button = G.UIDEF.card_focus_button{
+        card = card, parent = base_attach, type = 'buy',
+        func = 'Bakery_can_equip', button = 'Bakery_equip_from_shop', card_width = card_width
+      }
   end
   if card.area == G.shop_vouchers and G.shop_vouchers then --Add a redeem button
     base_attach.children.redeem = G.UIDEF.card_focus_button{
@@ -872,7 +878,7 @@ end
                     {n=G.UIT.O, config={object = DynaText({string = {{prefix = localize('$'), ref_table = card, ref_value = 'cost'}}, colours = {G.C.MONEY},shadow = true, silent = true, bump = true, pop_in = 0, scale = 0.5})}},
                   }}
               }}
-          local t2 = card.ability.set == 'Voucher' and {
+          local t2 = card.ability.set == 'BakeryCharm' and Bakery_API.equip_button(card) or card.ability.set == 'Voucher' and {
             n=G.UIT.ROOT, config = {ref_table = card, minw = 1.1, maxw = 1.3, padding = 0.1, align = 'bm', colour = G.C.GREEN, shadow = true, r = 0.08, minh = 0.94, func = 'can_redeem', one_press = true, button = 'redeem_from_shop', hover = true}, nodes={
                 {n=G.UIT.T, config={text = localize('b_redeem'),colour = G.C.WHITE, scale = 0.4}}
             }} or card.ability.set == 'Booster' and {
@@ -1728,6 +1734,8 @@ function create_UIBox_blind_choice(type, run_info)
   local has_blind_drawn = next(SMODS.find_card("j_aij_blind_drawn")) and type == 'Boss'
 
   local disabled = false
+  local Bakery_no_select = (G.GAME.modifiers.Bakery_Sprint_Big and type == 'Big') or (G.GAME.modifiers.Bakery_Sprint_Small and (not type or type == 'Small'))
+  if Bakery_no_select then disabled = true end
   type = type or 'Small'
 
   local blind_choice = {
@@ -1840,7 +1848,7 @@ function create_UIBox_blind_choice(type, run_info)
   {n=G.UIT.R, config={id = type, align = "tm", func = 'blind_choice_handler', minh = not run_info and 10 or nil, ref_table = {deck = nil, run_info = run_info}, r = 0.1, padding = 0.05}, nodes={
     {n=G.UIT.R, config={align = "cm", colour = mix_colours(G.C.BLACK, G.C.L_BLACK, 0.5), r = 0.1, outline = 1, outline_colour = G.C.L_BLACK}, nodes={  
       {n=G.UIT.R, config={align = "cm", padding = 0.2}, nodes={
-          not run_info and {n=G.UIT.R, config={id = 'select_blind_button', align = "cm", ref_table = blind_choice.config, colour = disabled and G.C.UI.BACKGROUND_INACTIVE or G.C.ORANGE, minh = 0.6, minw = 2.7, padding = 0.07, r = 0.1, shadow = true, hover = true, one_press = true, button = 'select_blind'}, nodes={
+          not run_info and {n=G.UIT.R, config={id = 'select_blind_button', align = "cm", ref_table = blind_choice.config, colour = disabled and G.C.UI.BACKGROUND_INACTIVE or G.C.ORANGE, minh = 0.6, minw = 2.7, padding = 0.07, r = 0.1, shadow = true, hover = true, one_press = true, button = not Bakery_no_select and 'select_blind' or nil}, nodes={
             {n=G.UIT.T, config={ref_table = G.GAME.round_resets.loc_blind_states, ref_value = type, scale = 0.45, colour = disabled and G.C.UI.TEXT_INACTIVE or G.C.UI.TEXT_LIGHT, shadow = not disabled}}
           }} or 
           {n=G.UIT.R, config={id = 'select_blind_button', align = "cm", ref_table = blind_choice.config, colour = run_info_colour, minh = 0.6, minw = 2.7, padding = 0.07, r = 0.1, emboss = 0.08}, nodes={
@@ -4723,8 +4731,8 @@ function create_UIBox_card_unlock(card_center)
     1*G.CARD_H, 
     {card_limit = 2, type = 'consumeable', highlight_limit = 0})
   
-  local card = Card(G.your_collection.T.x + G.your_collection.T.w/2 - G.CARD_W/2, G.your_collection.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, card_center, {bypass_discovery_center = true, bypass_discovery_ui = true})
-  local locked_card = Card(G.your_collection.T.x + G.your_collection.T.w/2 - G.CARD_W/2, G.your_collection.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, card_center.set == 'Voucher' and G.v_locked or G.j_locked)
+  local card = Card(G.your_collection.T.x + G.your_collection.T.w/2 - G.CARD_W/2, G.your_collection.T.y, G.CARD_W, card_center.set == 'BakeryCharm' and G.CARD_W or G.CARD_H, G.P_CARDS.empty, card_center, {bypass_discovery_center = true, bypass_discovery_ui = true})
+  local locked_card = Card(G.your_collection.T.x + G.your_collection.T.w/2 - G.CARD_W/2, G.your_collection.T.y, G.CARD_W, card_center.set == 'BakeryCharm' and G.CARD_W or G.CARD_H, G.P_CARDS.empty, card_center.set == 'Voucher' and G.v_locked or card_center.set == 'BakeryCharm' and G.BakeryCharm_locked or G.j_locked)
   locked_card:remove_UI()
   locked_card.ID = card.ID
   card.states.click.can = false
@@ -4777,7 +4785,7 @@ function create_UIBox_card_unlock(card_center)
         {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
           {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
             {n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
-              {n=G.UIT.O, config={object = DynaText({string = {card_center.set == 'Voucher' and localize('k_voucher') or localize('k_joker')}, colours = {G.C.BLUE},shadow = true, rotate = true, bump = true, pop_in = 0.3, pop_in_rate = 2, scale = 1.2})}}
+              {n=G.UIT.O, config={object = DynaText({string = {card_center.set == 'Voucher' and localize('k_voucher') or card_center.set == 'BakeryCharm' and localize('k_bakerycharm') or localize('k_joker')}, colours = {G.C.BLUE},shadow = true, rotate = true, bump = true, pop_in = 0.3, pop_in_rate = 2, scale = 1.2})}}
             }},
             {n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
               {n=G.UIT.O, config={object = DynaText({string = {localize('k_unlocked_ex')}, colours = {G.C.RED},shadow = true, rotate = true, bump = true, pop_in = 0.6, pop_in_rate = 2, scale = 0.8})}}

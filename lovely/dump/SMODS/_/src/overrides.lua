@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'e0f28e350ca47e0e6adb47e98f1a7b806a98640f91666d9d8f2b7c0ce40711ef'
+LOVELY_INTEGRITY = 'beb41b64534231e462b3e7a24936a0435c6b3f7a92675611ce7ae251e2709ce5'
 
 --- STEAMODDED CORE
 --- OVERRIDES
@@ -2049,6 +2049,7 @@ function poll_edition(_key, _mod, _no_neg, _guaranteed, _options)
 	if not _options then
 		if _key == "wheel_of_fortune" or _key == "aura" then -- set base game edition polling
 			_options = { 'e_negative', 'e_polychrome', 'e_holo', 'e_foil' }
+			if G.GAME and G.GAME.Bakery_charm == 'BakeryCharm_Bakery_Fortuna' then _options = { 'e_negative', 'e_polychrome' } end
 		else
 			local unordered_options = get_current_pool("Edition", nil, nil, _key or 'edition_generic')
 			_options = {}

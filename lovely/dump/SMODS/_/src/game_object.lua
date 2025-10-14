@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '4c97a5f18c0a6980f6dd7b848cbfb2d1e45639269f2858ef98d6fe93c35610d3'
+LOVELY_INTEGRITY = '1dc57308d5810f66ceb6fd595b9d982a08254395f4cdff61822e6bd5cfaa6e68'
 
 --- STEAMODDED CORE
 --- MODULE API
@@ -2182,35 +2182,35 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                     return true
                 end
             }))
-            for i = 1, #G.hand.highlighted do
-                local percent = 1.15 - (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+            for i = 1, #Bakery_API.get_highlighted() do
+                local percent = 1.15 - (i - 0.999) / (#Bakery_API.get_highlighted() - 0.998) * 0.3
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
                     delay = 0.15,
                     func = function()
-                        G.hand.highlighted[i]:flip(); play_sound('card1', percent); G.hand.highlighted[i]:juice_up(0.3,
+                        Bakery_API.get_highlighted()[i]:flip(); play_sound('card1', percent); Bakery_API.get_highlighted()[i]:juice_up(0.3,
                             0.3); return true
                     end
                 }))
             end
             delay(0.2)
-            for i = 1, #G.hand.highlighted do
+            for i = 1, #Bakery_API.get_highlighted() do
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
                     delay = 0.1,
                     func = function()
-                        assert(SMODS.modify_rank(G.hand.highlighted[i], 1))
+                        assert(SMODS.modify_rank(Bakery_API.get_highlighted()[i], 1))
                         return true
                     end
                 }))
             end
-            for i = 1, #G.hand.highlighted do
-                local percent = 0.85 + (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+            for i = 1, #Bakery_API.get_highlighted() do
+                local percent = 0.85 + (i - 0.999) / (#Bakery_API.get_highlighted() - 0.998) * 0.3
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
                     delay = 0.15,
                     func = function()
-                        G.hand.highlighted[i]:flip(); play_sound('tarot2', percent, 0.6); G.hand.highlighted[i]
+                        Bakery_API.get_highlighted()[i]:flip(); play_sound('tarot2', percent, 0.6); Bakery_API.get_highlighted()[i]
                             :juice_up(
                                 0.3, 0.3); return true
                     end
@@ -2220,7 +2220,7 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 trigger = 'after',
                 delay = 0.2,
                 func = function()
-                    G.hand:unhighlight_all(); return true
+                    Bakery_API.unhighlight_all(); return true
                 end
             }))
             delay(0.5)

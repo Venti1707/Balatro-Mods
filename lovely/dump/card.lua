@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1e86352ba3c6e976d6b09e4b4e3f3421fcdbe1103b37a42dd55585d0d302cfc2'
+LOVELY_INTEGRITY = '660efbcc860c9acb43e8bda1608f2739da8eb7266f9a11ee36f70d1301f77f37'
 
 --class
 Card = Moveable:extend()
@@ -1426,25 +1426,25 @@ function Card:use_consumeable(area, copier)
             play_sound('tarot1')
             used_tarot:juice_up(0.3, 0.5)
             return true end }))
-        for i=1, #G.hand.highlighted do
-            local percent = 1.15 - (i-0.999)/(#G.hand.highlighted-0.998)*0.3
-            G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() G.hand.highlighted[i]:flip();play_sound('card1', percent);G.hand.highlighted[i]:juice_up(0.3, 0.3);return true end }))
+        for i=1, #Bakery_API.get_highlighted() do
+            local percent = 1.15 - (i-0.999)/(#Bakery_API.get_highlighted()-0.998)*0.3
+            G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() Bakery_API.get_highlighted()[i]:flip();play_sound('card1', percent);Bakery_API.get_highlighted()[i]:juice_up(0.3, 0.3);return true end }))
         end
         delay(0.2)
         if self.ability.name == 'Death' then
-            local rightmost = G.hand.highlighted[1]
-            for i=1, #G.hand.highlighted do if G.hand.highlighted[i].T.x > rightmost.T.x then rightmost = G.hand.highlighted[i] end end
-            for i=1, #G.hand.highlighted do
+            local rightmost = Bakery_API.get_highlighted()[1]
+            for i=1, #Bakery_API.get_highlighted() do if Bakery_API.get_highlighted()[i].T.x > rightmost.T.x then rightmost = Bakery_API.get_highlighted()[i] end end
+            for i=1, #Bakery_API.get_highlighted() do
                 G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
-                    if G.hand.highlighted[i] ~= rightmost then
-                        copy_card(rightmost, G.hand.highlighted[i])
+                    if Bakery_API.get_highlighted()[i] ~= rightmost then
+                        copy_card(rightmost, Bakery_API.get_highlighted()[i])
                     end
                     return true end }))
             end  
         elseif self.ability.name == 'Strength' then
-            for i=1, #G.hand.highlighted do
+            for i=1, #Bakery_API.get_highlighted() do
                 G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
-                    local card = G.hand.highlighted[i]
+                    local card = Bakery_API.get_highlighted()[i]
                     local suit_prefix = string.sub(card.base.suit, 1, 1)..'_'
                     local rank_suffix = card.base.id == 14 and 2 or math.min(card.base.id+1, 14)
                     if rank_suffix < 10 then rank_suffix = tostring(rank_suffix)
@@ -1458,19 +1458,19 @@ function Card:use_consumeable(area, copier)
                 return true end }))
             end  
         elseif self.ability.consumeable.suit_conv then
-            for i=1, #G.hand.highlighted do
-                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() G.hand.highlighted[i]:change_suit(self.ability.consumeable.suit_conv);return true end }))
+            for i=1, #Bakery_API.get_highlighted() do
+                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() Bakery_API.get_highlighted()[i]:change_suit(self.ability.consumeable.suit_conv);return true end }))
             end    
         else
-            for i=1, #G.hand.highlighted do
-                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() G.hand.highlighted[i]:set_ability(G.P_CENTERS[self.ability.consumeable.mod_conv]);return true end }))
+            for i=1, #Bakery_API.get_highlighted() do
+                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function() Bakery_API.get_highlighted()[i]:set_ability(G.P_CENTERS[self.ability.consumeable.mod_conv]);return true end }))
             end 
         end
-        for i=1, #G.hand.highlighted do
-            local percent = 0.85 + (i-0.999)/(#G.hand.highlighted-0.998)*0.3
-            G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() G.hand.highlighted[i]:flip();play_sound('tarot2', percent, 0.6);G.hand.highlighted[i]:juice_up(0.3, 0.3);return true end }))
+        for i=1, #Bakery_API.get_highlighted() do
+            local percent = 0.85 + (i-0.999)/(#Bakery_API.get_highlighted()-0.998)*0.3
+            G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() Bakery_API.get_highlighted()[i]:flip();play_sound('tarot2', percent, 0.6);Bakery_API.get_highlighted()[i]:juice_up(0.3, 0.3);return true end }))
         end
-        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() G.hand:unhighlight_all(); return true end }))
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() Bakery_API.unhighlight_all(); return true end }))
         delay(0.5)
     end
     if self.ability.name == 'Black Hole' then
@@ -1499,7 +1499,7 @@ function Card:use_consumeable(area, copier)
         update_hand_text({sound = 'button', volume = 0.7, pitch = 1.1, delay = 0}, {mult = 0, chips = 0, handname = '', level = ''})
     end
     if self.ability.name == 'Talisman' or self.ability.name == 'Deja Vu' or self.ability.name == 'Trance' or self.ability.name == 'Medium' then
-        local conv_card = G.hand.highlighted[1]
+        local conv_card = Bakery_API.get_highlighted()[1]
         G.E_MANAGER:add_event(Event({func = function()
             play_sound('tarot1')
             used_tarot:juice_up(0.3, 0.5)
@@ -1510,13 +1510,13 @@ function Card:use_consumeable(area, copier)
             return true end }))
         
         delay(0.5)
-        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() G.hand:unhighlight_all(); return true end }))
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() Bakery_API.unhighlight_all(); return true end }))
     end
     if self.ability.name == 'Aura' then 
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
             local over = false
             local edition = poll_edition('aura', nil, true, true)
-            local aura_card = G.hand.highlighted[1]
+            local aura_card = Bakery_API.get_highlighted()[1]
             aura_card:set_edition(edition, true)
             used_tarot:juice_up(0.3, 0.5)
         return true end }))
@@ -1528,7 +1528,7 @@ function Card:use_consumeable(area, copier)
                 local new_cards = {}
                 for i = 1, self.ability.extra do
                     G.playing_card = (G.playing_card and G.playing_card + 1) or 1
-                    local _card = copy_card(G.hand.highlighted[1], nil, nil, G.playing_card)
+                    local _card = copy_card(Bakery_API.get_highlighted()[1], nil, nil, G.playing_card)
                     _card:add_to_deck()
                     G.deck.config.card_limit = G.deck.config.card_limit + 1
                     table.insert(G.playing_cards, _card)
@@ -1592,8 +1592,8 @@ function Card:use_consumeable(area, copier)
     if self.ability.consumeable.remove_card then
         local destroyed_cards = {}
         if self.ability.name == 'The Hanged Man' then
-            for i=#G.hand.highlighted, 1, -1 do
-                destroyed_cards[#destroyed_cards+1] = G.hand.highlighted[i]
+            for i=#Bakery_API.get_highlighted(), 1, -1 do
+                destroyed_cards[#destroyed_cards+1] = Bakery_API.get_highlighted()[i]
             end
             G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
                 play_sound('tarot1')
@@ -1603,12 +1603,12 @@ function Card:use_consumeable(area, copier)
                 trigger = 'after',
                 delay = 0.2,
                 func = function() 
-                    for i=#G.hand.highlighted, 1, -1 do
-                        local card = G.hand.highlighted[i]
+                    for i=#Bakery_API.get_highlighted(), 1, -1 do
+                        local card = Bakery_API.get_highlighted()[i]
                         if SMODS.shatters(card) then
                             card:shatter()
                         else
-                            card:start_dissolve(nil, i == #G.hand.highlighted)
+                            card:start_dissolve(nil, i == #Bakery_API.get_highlighted())
                         end
                     end
                     return true end }))
@@ -1878,7 +1878,7 @@ function Card:can_use_consumeable(any_state, skip_check)
             end
         end
         if self.ability.name == 'Aura' then 
-            if G.hand and (#G.hand.highlighted == 1) and G.hand.highlighted[1] and (not G.hand.highlighted[1].edition) then return true end
+            if G.hand and (#Bakery_API.get_highlighted() == 1) and Bakery_API.get_highlighted()[1] and (not Bakery_API.get_highlighted()[1].edition) then return true end
         end
         if self.ability.name == 'Ectoplasm' or self.ability.name == 'Hex' then 
             if next(self.eligible_editionless_jokers) then return true end
@@ -1897,9 +1897,9 @@ function Card:can_use_consumeable(any_state, skip_check)
                 return false
             end
         end
-        if G.STATE == G.STATES.SELECTING_HAND or G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.PLANET_PACK or G.STATE == G.STATES.SMODS_BOOSTER_OPENED then
+        if self.ability.name ~= "Cryptid" or (G.STATE == G.STATES.SELECTING_HAND or G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.PLANET_PACK) or G.STATE == G.STATES.SMODS_BOOSTER_OPENED then
             if self.ability.consumeable.max_highlighted then
-                if self.ability.consumeable.mod_num >= #G.hand.highlighted and #G.hand.highlighted >= (self.ability.consumeable.min_highlighted or 1) then
+                if self.ability.consumeable.mod_num >= #Bakery_API.get_highlighted() and #Bakery_API.get_highlighted() >= (self.ability.consumeable.min_highlighted or 1) then
                     return true
                 end
             end
@@ -2743,6 +2743,9 @@ function Card:calculate_joker(context)
     local obj = self.config.center
     if self.ability.set ~= "Enhanced" and obj.calculate and type(obj.calculate) == 'function' then
         local o, t = obj:calculate(self, context)
+        if G.GAME.Bakery_charm == 'BakeryCharm_Bakery_PrintError' then
+            obj:calculate(self, context)
+        end
         if o or t then return o, t end
     end
     local context_blueprint_card = context.blueprint_card
@@ -3205,7 +3208,7 @@ function Card:calculate_joker(context)
         elseif context.using_consumeable then
             if self.ability.name == 'Glass Joker' and not context.blueprint and context.consumeable.ability.name == 'The Hanged Man'  then
                 local shattered_glass = 0
-                for k, val in ipairs(G.hand.highlighted) do
+                for k, val in ipairs(Bakery_API.get_highlighted()) do
                     if SMODS.has_enhancement(val, 'm_glass') then shattered_glass = shattered_glass + 1 end
                 end
                 if shattered_glass > 0 then

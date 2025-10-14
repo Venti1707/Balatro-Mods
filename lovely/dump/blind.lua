@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'b1633a2563cb69af8352e7721e28ec110c4d0a3966981b6c8508bc9ff21e8f08'
+LOVELY_INTEGRITY = '399dbc9e97fa19b7c3e0d6f8237cf6c9a90e528a7fe9ee918b79495afdaa3a41'
 
 --class
 Blind = Moveable:extend()
@@ -220,6 +220,9 @@ function Blind:set_blind(blind, reset, silent)
     end
 
     --add new debuffs
+    for _, v in ipairs(G.Bakery_charm_area.cards) do
+        self:debuff_card(v)
+    end
     for _, v in ipairs(G.playing_cards) do
         self:debuff_card(v)
     end
