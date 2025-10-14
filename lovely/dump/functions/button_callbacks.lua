@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'e89225bcd2bf28e5805cc9cdfc6601ebcfb15e7654e0f0305e0a49ddf9fd20ce'
+LOVELY_INTEGRITY = 'bf16c6819d6788a28890d1a20beeb893f4b2dbe1a0d455366e32ac0cf075ceb2'
 
 --Moves the tutorial to the next step in queue
 --
@@ -311,7 +311,7 @@ G.FUNCS.delete_profile = function(e)
 end
 
 G.FUNCS.can_unlock_all = function(e)
-  if G.PROFILES[G.SETTINGS.profile].all_unlocked or e.config.disable_button then
+  if (G.PROFILES[G.SETTINGS.profile].all_unlocked and REUNLOCK.check('all')) or e.config.disable_button then
       e.config.colour = G.C.UI.BACKGROUND_INACTIVE
       e.config.button = nil
   else

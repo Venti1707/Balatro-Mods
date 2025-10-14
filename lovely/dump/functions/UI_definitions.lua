@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'a1cf870c378e45b23c227ade5829ca9d137620aca07d5a31d81132f6534f7ca7'
+LOVELY_INTEGRITY = 'd32309f802b7b56e08e98200d1bcfd8378a8072654841c1fa5d2c3a674799c3a'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -5843,7 +5843,7 @@ function G.UIDEF.profile_option(_profile)
               {n=G.UIT.T, config={text = _profile == G.SETTINGS.profile and localize('b_reset_profile') or localize('b_delete_profile'), scale = 0.3, colour = G.C.UI.TEXT_LIGHT}}
             }}
           }},
-          (_profile == G.SETTINGS.profile and not G.PROFILES[G.SETTINGS.profile].all_unlocked) and {n=G.UIT.R, config={align = "cm", padding = 0, minh = 0.7}, nodes={
+                    (_profile == G.SETTINGS.profile and not (G.PROFILES[G.SETTINGS.profile].all_unlocked and REUNLOCK.check("all"))) and {n=G.UIT.R, config={align = "cm", padding = 0, minh = 0.7}, nodes={
             {n=G.UIT.R, config={align = "cm", minw = 3, maxw = 4, minh = 0.6, padding = 0.2, r = 0.1, hover = true, colour = G.C.ORANGE,func = 'can_unlock_all', button = "unlock_all", shadow = true, focus_args = {nav = 'wide'}}, nodes={
               {n=G.UIT.T, config={text = localize('b_unlock_all'), scale = 0.3, colour = G.C.UI.TEXT_LIGHT}}
             }}
