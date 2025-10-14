@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '3217d8efaa6fb9f842e2e032c5ee4e544ee9f33fee64456df428a857eb49e03a'
+LOVELY_INTEGRITY = 'f13aa2f8306d151b5bdfd69c9b0eb2d10764a405ad5e7e3d5af57e9961f6f7af'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -820,7 +820,7 @@ function modulate_sound(dt)
   for k, v in pairs(G.ARGS.ambient_sounds) do
     AC[k] = AC[k] or {}
     AC[k].per = (k == 'ambientOrgan1') and 0.7 or (k == 'ambientFire1' and 1.1) or (k == 'ambientFire2' and 1.05) or 1
-    AC[k].vol = (not G.video_organ and G.STATE == G.STATES.SPLASH) and 0 or AC[k].vol and v.volfunc(AC[k].vol) or 0
+    AC[k].vol = Cartomancer.handle_flames_volume((not G.video_organ and G.STATE == G.STATES.SPLASH) and 0 or AC[k].vol and v.volfunc(AC[k].vol) or 0)
   end
 
   G.ARGS.push = G.ARGS.push or {}

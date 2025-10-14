@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '9a3ab0330ce242d03cbc0136cd42f8d20d8e623606d936c56cfaf2e086747d15'
+LOVELY_INTEGRITY = '5f9e9df9ddca651fdfb4a2651a7ea05d3ade5a42b21308f2c03b596fc272a82d'
 
 --Moves the tutorial to the next step in queue
 --
@@ -1984,6 +1984,7 @@ G.FUNCS.flame_handler = function(e)
       end
       G.ARGS.flame_handler[key] = G.ARGS.flame_handler[key] or parameter:flame_handler()
   end
+  Cartomancer.init_setting_flames()
   for k, v in pairs(G.ARGS.flame_handler) do
     if e.config.id == v.id then 
       if not e.config.object:is(Sprite) or e.config.object.ID ~= v.ID then 
@@ -2016,16 +2017,20 @@ G.FUNCS.flame_handler = function(e)
               {name = 'id', val =  e.config.object.ID},
           }}})
           e.config.object:get_pos_pixel()
+          Cartomancer.align_object(e.config.object)
       end
       local _F = G.ARGS[v.arg_tab]
       local exptime = math.exp(-0.4*G.real_dt)
       
       if G.ARGS.score_intensity.earned_score >= G.ARGS.score_intensity.required_score and G.ARGS.score_intensity.required_score > 0 then
-        _F.intensity = ((G.pack_cards and not G.pack_cards.REMOVED) or (G.TAROT_INTERRUPT)) and 0 or math.max(0., math.log(G.ARGS.score_intensity.earned_score, 5)-2)
+        _F.intensity = ((G.pack_cards and not G.pack_cards.REMOVED) or (G.TAROT_INTERRUPT)) and 0 or Cartomancer.get_flames_intensity()
       else
         _F.intensity = 0
       end
 
+      if v.id == 'flame_chips_cart' or v.id == 'flame_mult_cart' then
+          _F.intensity = Cartomancer.get_flames_intensity(true)
+      end
       _F.timer = _F.timer + G.real_dt*(1 + _F.intensity*0.2)
       if _F.intensity_vel < 0 then _F.intensity_vel = _F.intensity_vel*(1 - 10*G.real_dt) end
       _F.intensity_vel = (1-exptime)*(_F.intensity - _F.real_intensity)*G.real_dt*25 + exptime*_F.intensity_vel

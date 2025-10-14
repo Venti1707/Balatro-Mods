@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '106266f12e9fbfdbb5b70b28293a5b72ee3d7743f1ed81def369824be0d515c5'
+LOVELY_INTEGRITY = '2097654fab059899caa2bef397c42cdeddeab899eedb29d2568d4c97d627bed0'
 
 --class
 Card = Moveable:extend()
@@ -4650,6 +4650,7 @@ function Card:draw(layer)
     self.hover_tilt = 1
     
     if not self.states.visible then return end
+    if self.VT.x < -3 or self.VT.x > G.TILE_W + 2.5 then return end
     
     if (layer == 'shadow' or layer == 'both') then
         self.ARGS.send_to_shader = self.ARGS.send_to_shader or {}

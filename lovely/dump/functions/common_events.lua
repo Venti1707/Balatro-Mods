@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '6d51a24bf8ba4a27c1bcde5badc590717110d7a7655d22a8c916942ea83fd076'
+LOVELY_INTEGRITY = '62be7d02332aa2b9203483544781407602a97b27dd1075471fbdd3f038194fec'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -401,6 +401,9 @@ function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped
             if card then 
                 if from then card = from:remove_card(card) end
                 if card then drawn = true end
+                if card and to == G.hand and not card.states.visible then
+                    card.states.visible = true
+                end
                 local stay_flipped = G.GAME and G.GAME.blind and G.GAME.blind:stay_flipped(to, card, from)
                 if G.GAME.modifiers.flipped_cards and to == G.hand then
                     if pseudorandom(pseudoseed('flipped_card')) < 1/G.GAME.modifiers.flipped_cards then
@@ -411,6 +414,9 @@ function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped
             else
                 card = to:draw_card_from(from, stay_flipped, discarded_only)
                 if card then drawn = true end
+                if card and to == G.hand and not card.states.visible then
+                    card.states.visible = true
+                end
             end
             if not mute and drawn then
                 if from == G.deck or from == G.hand or from == G.play or from == G.jokers or from == G.consumeables or from == G.discard then

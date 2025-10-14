@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '5d77bfe05f637cccace0b412c4cffda6ffb86936643694426ea51c72831c6cd9'
+LOVELY_INTEGRITY = '49dc1dcf2382e03bb195bcf014d98f4e02cde546c187d65dc35ad9a15a008e2d'
 
 ---@class Controller
 Controller = Object:extend()
@@ -768,6 +768,12 @@ function Controller:button_release_update(button, dt)
 end
 
 function Controller:key_press_update(key, dt)
+    if key == "escape" and Cartomancer.INTERNAL_in_config then
+        Cartomancer.INTERNAL_in_config = false
+        if not Cartomancer.use_smods() then
+            Cartomancer.save_config()
+        end
+    end
     if key == "escape" and (G.ACTIVE_MOD_UI or SMODS.IN_MODS_TAB) then
         G.FUNCS.exit_mods()
     end
