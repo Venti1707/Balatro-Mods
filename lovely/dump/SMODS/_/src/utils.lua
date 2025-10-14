@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '55140878ddf61b2043989347098a5b75b6565936f8af4103c0662ce76c27cd13'
+LOVELY_INTEGRITY = 'b6eaa606bc21588c9165f1a70f59f54642d4414c16d9d4d4a8a1d109953918ee'
 
 --- STEAMODDED CORE
 --- UTILITY FUNCTIONS
@@ -940,6 +940,14 @@ end
 function Card:can_calculate(ignore_debuff, ignore_sliced)
     local is_available = (not self.debuff or ignore_debuff) and (not self.getting_sliced or ignore_sliced)
     -- TARGET : Add extra conditions here
+    if is_available == true then
+        is_available = (not self.bb_paralysis or ignore_debuff)
+    end
+    
+    if self.config.center.is_snackbag then
+        is_available = false
+    end
+    
     return is_available
 end
 
@@ -1371,7 +1379,7 @@ SMODS.trigger_effects = function(effects, card)
     for _, effect_table in ipairs(effects) do
         -- note: these sections happen to be mutually exclusive:
         -- Playing cards in scoring
-        for _, key in ipairs({'playing_card', 'enhancement', 'edition', 'seals'}) do
+        for _, key in ipairs({'playing_card', 'enhancement', 'edition', 'seals', 'counters'}) do
             SMODS.calculate_effect_table_key(effect_table, key, card, ret)
         end
         for _, k in ipairs(SMODS.Sticker.obj_buffer) do
@@ -2072,6 +2080,8 @@ function SMODS.get_card_areas(_type, _context)
         local t = {G.jokers, G.consumeables, G.vouchers}
         t[#t + 1] = G.Bakery_charm_area
         -- TARGET: add your own CardAreas for joker evaluation
+        table.insert(t, Kino.snackbag)
+        table.insert(t, G.kino_offscreen_area)
         return t
     end
     if _type == 'individual' then

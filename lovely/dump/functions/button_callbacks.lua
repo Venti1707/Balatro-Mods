@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f1cf716171dccf48f125a1e843cba002039bcbc155716be88269312bf05c8c7b'
+LOVELY_INTEGRITY = '7265b08c01b82a603144744fa0597d870dcaaf80b5861022527d5912756db348'
 
 --Moves the tutorial to the next step in queue
 --
@@ -2273,6 +2273,14 @@ end
       delay(0.2)
       e.config.ref_table:use_consumeable(area)
       SMODS.calculate_context({using_consumeable = true, consumeable = card, area = card.from_area})
+      G.E_MANAGER:add_event(Event({
+          trigger = 'immediate',
+          func = (function()     
+              if G.GAME.modifiers.kino_wallstreet then
+                  ease_dollars(-G.GAME.dollars)
+              end
+          return true end)
+          }))
     elseif card.ability.set == 'Enhanced' or card.ability.set == 'Default' then 
       G.playing_card = (G.playing_card and G.playing_card + 1) or 1
       G.deck:emplace(card)
@@ -2540,6 +2548,7 @@ end
     G.CONTROLLER.locks.toggle_shop = true
     if G.shop then 
       SMODS.calculate_context({ending_shop = true})
+      	end_shopping()
       G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
@@ -2993,8 +3002,12 @@ G.FUNCS.cash_out = function(e)
                 G.round_eval = nil
               end
               G.GAME.current_round.jokers_purchased = 0
-              G.GAME.current_round.discards_left = math.max(0, G.GAME.round_resets.discards + G.GAME.round_bonus.discards)
-              G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
+              if not G.GAME.modifiers.carryover_discards then
+                  G.GAME.current_round.discards_left = math.max(0, G.GAME.round_resets.discards + G.GAME.round_bonus.discards)
+              end
+              if not G.GAME.modifiers.carryover_hands then
+                  G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
+              end
               if G.GAME.akyrs_always_skip_shops then
                   G.STATE = G.STATES.BLIND_SELECT
               else

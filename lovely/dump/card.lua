@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '660efbcc860c9acb43e8bda1608f2739da8eb7266f9a11ee36f70d1301f77f37'
+LOVELY_INTEGRITY = '39f308736b6702df0693e2d3dd83eb8e763fcffc2998dec6446cc8fcf0471fcb'
 
 --class
 Card = Moveable:extend()
@@ -661,6 +661,13 @@ end
 
 function Card:get_seal(bypass_debuff)
     if self.debuff and not bypass_debuff then return end
+    if next(find_joker('j_kino_thing')) and (self.base.suit == G.GAME.current_round.kino_thing_card.suit) then
+    	return true
+    end
+    
+    if next(find_joker('j_kino_sleepy_hollow')) and (SMODS.has_enhancement(self, 'm_kino_monster') or SMODS.has_enhancement(self, 'm_kino_horror')) then
+    	return true
+    end
     return self.seal
 end
 
@@ -1225,24 +1232,12 @@ function Card:get_chip_mult()
 
     if self.ability.set == 'Joker' then return 0 end
     local ret = (not self.ability.extra_enhancement and self.ability.perma_mult) or 0
-     local is_chip_mult = self.ability._saved_chip_values ~= nil
-    
-        if self.ability.effect == "Lucky Card" then
-            local base_mult = 0
-            if is_chip_mult then
-                base_mult = (self.ability._saved_chip_values.nominal or 0) +
-                            (self.ability._saved_chip_values.bonus or 0) +
-                            (self.ability._saved_chip_values.perma_bonus or 0)
-            end
-            
-            local ret = base_mult + ((not self.ability.extra_enhancement and self.ability.perma_mult) or 0)
-    
-            if SMODS.pseudorandom_probability(self, 'lucky_mult', 1, 5) then
-                self.lucky_trigger = true
-                ret = ret + self.ability.mult
-            end
-            return ret
-        else
+    if self.ability.effect == "Lucky Card" then
+        if SMODS.pseudorandom_probability(self, 'lucky_mult', 1 * (self.ability.lucky_bonus or 1), 5) then
+            self.lucky_trigger = true
+            ret = ret + self.ability.mult
+        end
+    else
         ret = ret + self.ability.mult
     end
     -- TARGET: get_chip_mult
@@ -1388,7 +1383,7 @@ function Card:get_p_dollars()
     end
     if self.ability.p_dollars > 0 then
         if self.ability.effect == "Lucky Card" then 
-            if SMODS.pseudorandom_probability(self, 'lucky_money', 1, 15) then
+            if SMODS.pseudorandom_probability(self, 'lucky_money', 1 * (self.ability.lucky_bonus or 1), 15) then
                 self.lucky_trigger = true
                 ret = ret +  self.ability.p_dollars
             end
@@ -1693,6 +1688,9 @@ function Card:use_consumeable(area, copier)
         end
         delay(0.3)
         SMODS.calculate_context({ remove_playing_cards = true, removed = destroyed_cards })
+        
+        G.GAME.cards_destroyed = G.GAME.cards_destroyed + (#destroyed_cards or 0)
+        
     end
     if self.ability.name == 'The Fool' then
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
@@ -1995,6 +1993,7 @@ function Card:can_sell_card(context)
     if (G.SETTINGS.tutorial_complete or G.GAME.pseudorandom.seed ~= 'TUTORIAL' or G.GAME.round_resets.ante > 1) and
         self.area and
         self.area.config.type == 'joker' and
+        self.config.center.can_be_sold ~= false and
         not SMODS.is_eternal(self, {from_sell = true}) then
         return true
     end
@@ -4498,6 +4497,13 @@ function Card:calculate_joker(context)
 
 function Card:is_suit(suit, bypass_debuff, flush_calc)
     if flush_calc then
+    if next(find_joker('j_kino_thing')) and (self.base.suit == G.GAME.current_round.kino_thing_card.suit) then
+    	return true
+    end
+    
+    if next(find_joker('j_kino_sleepy_hollow')) and (SMODS.has_enhancement(self, 'm_kino_monster') or SMODS.has_enhancement(self, 'm_kino_horror')) then
+    	return true
+    end
         if SMODS.has_no_suit(self) then
             return false
         end
@@ -4510,6 +4516,13 @@ function Card:is_suit(suit, bypass_debuff, flush_calc)
         return self.base.suit == suit
     else
         if self.debuff and not bypass_debuff then return end
+        if next(find_joker('j_kino_thing')) and (self.base.suit == G.GAME.current_round.kino_thing_card.suit) then
+        	return true
+        end
+        
+        if next(find_joker('j_kino_sleepy_hollow')) and (SMODS.has_enhancement(self, 'm_kino_monster') or SMODS.has_enhancement(self, 'm_kino_horror')) then
+        	return true
+        end
         if SMODS.has_no_suit(self) then
             return false
         end
@@ -4956,6 +4969,13 @@ function Card:draw(layer)
             end
             if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center then
                 local shared_sprite = (self.ability.set == 'Edition' or self.ability.set == 'Joker') and G.shared_undiscovered_joker or G.shared_undiscovered_tarot
+                
+                if not G.shared_undiscovered_confection then G.shared_undiscovered_confection = Sprite(0, 0, G.CARD_W, G.CARD_H, G.ASSET_ATLAS['kino_confections'], {x = 1, y = 3}) end
+                
+                if self.ability.set == 'confection' then
+                    shared_sprite = G.shared_undiscovered_confection
+                end
+                
                 local scale_mod = -0.05 + 0.05*math.sin(1.8*G.TIMERS.REAL)
                 local rotate_mod = 0.03*math.sin(1.219*G.TIMERS.REAL)
 
@@ -5161,10 +5181,10 @@ function Card:highlight(is_higlighted)
             self.children.use_button = UIBox{
                 definition = G.UIDEF.use_and_sell_buttons(self), 
                 config = {align=
-                        ((self.area == G.jokers) or (self.area == G.consumeables)) and "cr" or
+                        ((self.area == G.jokers) or (self.area == G.consumeables) or (self.area == Kino.snackbag)) and "cr" or
                         "bmi"
                     , offset = 
-                        ((self.area == G.jokers) or (self.area == G.consumeables)) and {x=x_off - 0.4,y=0} or
+                        ((self.area == G.jokers) or (self.area == G.consumeables) or (self.area == Kino.snackbag)) and {x=x_off - 0.4,y=0} or
                         {x=0,y=0.65},
                     parent =self}
             }
@@ -5226,6 +5246,8 @@ function Card:save()
         pinned = self.pinned,
         edition = self.edition,
         seal = self.seal,
+        counter = self.counter and self.counter.key or nil,
+        counter_config = self.counter_config,
         bypass_discovery_center = self.bypass_discovery_center,
         bypass_discovery_ui = self.bypass_discovery_ui,
         bypass_lock = self.bypass_lock,
@@ -5318,6 +5340,8 @@ function Card:load(cardTable, other_card)
     self.pinned = cardTable.pinned
     self.edition = cardTable.edition
     self.seal = cardTable.seal
+    self.counter = G.P_COUNTERS[cardTable.counter]
+    self.counter_config = cardTable.counter_config
 
     remove_all(self.children)
     self.children = {}

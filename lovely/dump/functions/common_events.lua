@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '047afbce5e48ee57192723f6cc16965087d03aaba11b5b1bdcb809f762771e2a'
+LOVELY_INTEGRITY = '7b8b906e392a9d2cee90457315356ce0fb8fac29d0f015b3abdf50a01f09ceff'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -664,6 +664,12 @@ function eval_card(card, context)
             }
         end
         -- TARGET: evaluate your own repetition effects
+        if card.counter then
+            local counters = card:bb_calculate_counter(context)
+            if counters then
+                ret.counters = counters
+            end
+        end
         if card.ability.repetitions and card.ability.repetitions > 0 then
             ret.seals = ret.seals or { card = card, message = localize('k_again_ex') }
             ret.seals.repetitions = (ret.seals.repetitions and ret.seals.repetitions + card.ability.repetitions) or card.ability.repetitions
@@ -845,6 +851,12 @@ function eval_card(card, context)
         end
     end
     -- TARGET: evaluate your own general effects
+    if card.counter then
+        local counters = card:bb_calculate_counter(context)
+        if counters then
+            ret.counters = counters
+        end
+    end
     local post_trig = {}
     local areas = SMODS.get_card_areas('jokers')
     local area_set = {}
@@ -2356,7 +2368,8 @@ function get_pack(_key, _type)
     end
     local cume, it, center = 0, 0, nil
     for k, v in ipairs(G.P_CENTER_POOLS['Booster']) do
-        if (not _type or _type == v.kind) and not G.GAME.banned_keys[v.key] then cume = cume + (v.weight or 1 ) end
+    	local _weight = v.get_weight and v:get_weight() or v.weight
+    	if (not _type or _type == v.kind) and not G.GAME.banned_keys[v.key] then cume = cume + (_weight or 1 ) end
     end
     local poll = pseudorandom(pseudoseed((_key or 'pack_generic')..G.GAME.round_resets.ante))*cume
     for k, v in ipairs(G.P_CENTER_POOLS['Booster']) do
@@ -2369,6 +2382,7 @@ function get_pack(_key, _type)
 end
 
 function get_current_pool(_type, _rarity, _legendary, _append)
+        	local comp_rarity = nil
         --create the pool
         G.ARGS.TEMP_POOL = EMPTY(G.ARGS.TEMP_POOL)
         local _pool, _starting_pool, _pool_key, _pool_size = G.ARGS.TEMP_POOL, nil, '', 0
@@ -2388,6 +2402,7 @@ function get_current_pool(_type, _rarity, _legendary, _append)
 _rarity = (_legendary and 4) or (type(_rarity) == "number" and ((_rarity > 0.95 and 3) or (_rarity > 0.7 and 2) or 1)) or _rarity
 _rarity = ({Common = 1, Uncommon = 2, Rare = 3, Legendary = 4})[_rarity] or _rarity
 local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_resets.ante..(_append or ''))
+	comp_rarity = rarity
 
             _starting_pool, _pool_key = G.P_JOKER_RARITY_POOLS[rarity], 'Joker'..rarity..((not _legendary and _append) or '')
         elseif SMODS.ObjectTypes[_type] and SMODS.ObjectTypes[_type].rarities then
@@ -2477,6 +2492,9 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
 
             if v.no_pool_flag and G.GAME.pool_flags[v.no_pool_flag] then add = nil end
             if v.yes_pool_flag and not G.GAME.pool_flags[v.yes_pool_flag] then add = nil end
+            if v.set == 'Joker' and not v.kino_joker and 
+            ((kino_config and kino_config.movie_jokers_only) or
+            G.GAME.modifiers.movie_jokers_only) then add = nil end
             
             if v.in_pool and type(v.in_pool) == 'function' then
                 add = in_pool and (add or pool_opts.override_base_checks)
@@ -2506,6 +2524,20 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
             end
         end
 
+        	if _type == "Joker" then
+        		for _, _jokerid in ipairs(Kino.legendaries) do
+        			local _joker = SMODS.Centers["j_kino_" .. _jokerid]
+        			if _joker then
+        				local _garb, rarity_test = _joker:legendary_conditions(self, _joker)
+        				rarity_test = 6 - rarity_test
+        				if rarity_test == 0 then rarity_test = 1 end
+        				if type(comp_rarity) == "number" 
+        				and rarity_test == comp_rarity then
+        					_pool[#_pool + 1] = "j_kino_" .. _jokerid
+        				end
+        			end
+        		end
+        	end
         --if pool is empty
         if _pool_size == 0 then
             _pool = EMPTY(G.ARGS.TEMP_POOL)
@@ -3284,7 +3316,7 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
         elseif _c.effect == 'Steel Card' then loc_vars = {cfg.h_x_mult}
         elseif _c.effect == 'Stone Card' then loc_vars = {((specific_vars and SMODS.signed(specific_vars.bonus_chips)) or cfg.bonus and SMODS.signed(cfg.bonus) or 0)}
         elseif _c.effect == 'Gold Card' then loc_vars = {specific_vars and SMODS.signed_dollars(specific_vars.total_h_dollars) or cfg.h_dollars and SMODS.signed_dollars(cfg.h_dollars) or 0}
-        elseif _c.effect == 'Lucky Card' then loc_vars = {G.GAME.probabilities.normal, cfg.mult, 5, cfg.p_dollars, 15}
+        elseif _c.effect == 'Lucky Card' then loc_vars = {G.GAME.probabilities.normal * (cfg.lucky_bonus or 1), cfg.mult, 5, cfg.p_dollars, 15}
         end
         localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = _c.vars or loc_vars}
         if _c.name ~= 'Stone Card' and ((specific_vars and specific_vars.bonus_chips) or (cfg.bonus ~= 0 and cfg.bonus)) then
@@ -3472,6 +3504,9 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
         desc_nodes[#desc_nodes+1] = main_end 
     end
 
+   if card and card.counter then
+       info_queue[#info_queue+1] = card.counter
+   end
    if card_type == 'Default' or card_type == 'Enhanced' and not _c.replace_base_card and card and card.base then
        if not _c.no_suit then
            local suit = SMODS.Suits[card.base.suit] or {}
@@ -3582,7 +3617,7 @@ function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, h
         info_queue = {}
     end
     for _, v in ipairs(info_queue) do
-        generate_card_ui(v, full_UI_table, {is_info_queue = true})
+        generate_card_ui(v, full_UI_table, {is_info_queue = true}, nil, nil, nil, v.main_start, v.main_end)
     end
 
     return full_UI_table

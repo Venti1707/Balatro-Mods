@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'cf9aeabf2a04a489731263bb816cdd878ea20118c20cf3f58c4eed9b08c44d5b'
+LOVELY_INTEGRITY = 'cac23b7e170c9bae7a4816c16b2e94eaa426b13ef73f8718783c375900b5fdc5'
 
 function win_game()
     if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
@@ -208,6 +208,16 @@ function end_round()
                     delay(0.4); ease_ante(1, true); delay(0.4); check_for_unlock({type = 'ante_up', ante = G.GAME.round_resets.ante + 1})
                 end
                 G.FUNCS.draw_from_discard_to_deck()
+                if G.GAME.blind:get_type() == 'Boss' then
+                	G.FUNCS.draw_from_area_to_abduction()  
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                		delay = 0.3,
+                        func = (function()  
+                			Kino.abduction_end()
+                	        return true end)
+                	}))
+                end
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
                     delay = 0.3,
@@ -263,8 +273,12 @@ function new_round()
     G.E_MANAGER:add_event(Event({
       trigger = 'immediate',
       func = function()
-            G.GAME.current_round.discards_left = math.max(0, G.GAME.round_resets.discards + G.GAME.round_bonus.discards)
-            G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
+            if not G.GAME.modifiers.carryover_discards then
+                G.GAME.current_round.discards_left = math.max(0, G.GAME.round_resets.discards + G.GAME.round_bonus.discards)
+            end
+            if not G.GAME.modifiers.carryover_hands then
+                G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
+            end
             G.GAME.current_round.hands_played = 0
             G.GAME.current_round.discards_used = 0
             G.GAME.current_round.any_hand_drawn = nil
@@ -282,6 +296,10 @@ function new_round()
             G.GAME.current_round.free_rerolls = G.GAME.round_resets.free_rerolls
             calculate_reroll_cost(true)
 
+            
+            local blair = find_joker('j_kino_blair_witch')
+            G.GAME.current_round.free_rerolls = G.GAME.current_round.free_rerolls + #blair
+            calculate_reroll_cost(true)
             G.GAME.round_bonus.next_hands = 0
             G.GAME.round_bonus.discards = 0
 
@@ -350,6 +368,13 @@ G.FUNCS.draw_from_deck_to_hand = function(e)
         end
         hand_space = #cards_to_draw
     end
+    if G.GAME.blind.in_blind and 
+    next(find_joker('j_kino_insomnia')) and
+    (G.GAME.current_round.hands_played > 0 or
+    G.GAME.current_round.discards_used > 0) then 
+    	SMODS.calculate_context({insomnia_awake = true})
+    	return
+    end
     if G.GAME.blind.name == 'The Serpent' and
         not G.GAME.blind.disabled and
         (G.GAME.current_round.hands_played > 0 or
@@ -390,6 +415,11 @@ G.FUNCS.discard_cards_from_highlighted = function(e, hook)
 
     for k, v in ipairs(G.playing_cards) do
         v.ability.forced_selection = nil
+    end
+    for _index, _pcard in ipairs(G.hand.highlighted) do
+        if _pcard.ability.cannot_be_discarded then
+            table.remove(G.hand.highlighted, _index)
+        end
     end
 
     if G.CONTROLLER.focused.target and G.CONTROLLER.focused.target.area == G.hand then G.card_area_focus_reset = {area = G.hand, rank = G.CONTROLLER.focused.target.rank} end
@@ -448,6 +478,9 @@ G.FUNCS.discard_cards_from_highlighted = function(e, hook)
         end
         
         -- TARGET: effects after cards destroyed in discard
+        
+        G.GAME.cards_destroyed = G.GAME.cards_destroyed + (#destroyed_cards or 0)
+        
 
         G.GAME.round_scores.cards_discarded.amt = G.GAME.round_scores.cards_discarded.amt + #cards
         check_for_unlock({type = 'discard_custom', cards = cards})
@@ -481,6 +514,11 @@ G.FUNCS.play_cards_from_highlighted = function(e)
 
     for k, v in ipairs(G.playing_cards) do
         v.ability.forced_selection = nil
+    end
+    for _index, _pcard in ipairs(G.hand.highlighted) do
+        if _pcard.ability.cannot_be_discarded then
+            table.remove(G.hand.highlighted, _index)
+        end
     end
     
     table.sort(G.hand.highlighted, function(a,b) return a.T.x < b.T.x end)
@@ -542,6 +580,7 @@ G.FUNCS.play_cards_from_highlighted = function(e)
                     func = function()
                         if G.SCORING_COROUTINE then return false end 
                         check_for_unlock({type = 'play_all_hearts'})
+                        G.FUNCS.draw_from_area_to_abduction()
                         G.FUNCS.draw_from_play_to_discard()
                         G.GAME.hands_played = G.GAME.hands_played + 1
                         G.GAME.current_round.hands_played = G.GAME.current_round.hands_played + 1
@@ -619,6 +658,14 @@ function evaluate_play_intro()
     end
     -- TARGET: adding to hand effects
     scoring_hand = final_scoring_hand
+    
+    G.GAME.last_played_hand = Kino.get_dummy_codex()
+    
+    for _, _pcard in ipairs(scoring_hand) do
+        G.GAME.last_played_hand[_] = _pcard
+    end
+    
+    
     delay(0.2)
     for i=1, #scoring_hand do
         --Highlight all the cards used in scoring and play a sound indicating highlight
@@ -653,6 +700,10 @@ function evaluate_play_intro()
         local hand_text_set = false
         -- context.before calculations
         SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, before = true})
+        
+        for i = 1, #G.GAME.tags do
+            G.GAME.tags[i]:apply_to_run({type = 'hand_played', before = true, scoring_name = text})
+        end
         
         -- TARGET: effects before scoring starts
         
@@ -802,6 +853,9 @@ function evaluate_play_intro()
         
         -- TARGET: effects when cards are removed
         
+        G.GAME.cards_destroyed = G.GAME.cards_destroyed + (#cards_destroyed or 0)
+        
+        
 
 
         local glass_shattered = {}
@@ -912,6 +966,7 @@ function evaluate_play_intro()
     SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, after = true})
     
     -- TARGET: effects after hand evaluation
+    SMODS.calculate_context({full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, after_debuff = true, ignore_debuff = true})
 
     G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
@@ -921,6 +976,25 @@ function evaluate_play_intro()
             end
         return true end)
       }))
+    G.E_MANAGER:add_event(Event({
+        trigger = 'immediate',
+        func = (function()
+            if G.GAME.modifiers.kino_alien then  
+                for i = 1, G.GAME.modifiers.kino_alien do
+                    local _card = nil
+                    local _found_target = false
+                    while not _found_target do
+                        _card = pseudorandom_element(G.deck.cards)
+                        if not _card.debuff then
+                            _found_target = true
+                        end
+                    end
+                        
+                    SMODS.debuff_card(_card, true, "challenge_alien")
+                end
+            end
+        return true end)
+        }))
 
   end
   
@@ -928,7 +1002,7 @@ function evaluate_play_intro()
     local play_count = #G.play.cards
     local it = 1
     for k, v in ipairs(G.play.cards) do
-        if (not v.shattered) and (not v.destroyed) then 
+        if (not v.shattered) and (not v.destroyed) and (not v.abducted) then 
             draw_card(G.play,G.discard, it*100/play_count,'down', false, v)
             it = it + 1
         end
@@ -1031,6 +1105,11 @@ G.FUNCS.evaluate_round = function()
         pitch = pitch + 0.06
         dollars = dollars + G.GAME.current_round.hands_left*(G.GAME.modifiers.money_per_hand or 1)
     end
+    if G.GAME.modifiers.kino_yeag and G.GAME.current_round.sci_fi_upgrades_last_round > 0 then
+        add_round_eval_row({dollars = G.GAME.current_round.sci_fi_upgrades_last_round*(G.GAME.modifiers.kino_yeag), disp = G.GAME.current_round.sci_fi_upgrades_last_round, bonus = true, name='kino_sci_fi_payout', pitch = pitch})
+        pitch = pitch + 0.06
+        dollars = dollars +  G.GAME.current_round.sci_fi_upgrades_last_round*(G.GAME.modifiers.kino_yeag)
+    end
     if G.GAME.current_round.discards_left > 0 and G.GAME.modifiers.money_per_discard then
         add_round_eval_row({dollars = G.GAME.current_round.discards_left*(G.GAME.modifiers.money_per_discard), disp = G.GAME.current_round.discards_left, bonus = true, name='discards', pitch = pitch})
         pitch = pitch + 0.06
@@ -1052,6 +1131,7 @@ G.FUNCS.evaluate_round = function()
     end
     for i = 1, #G.GAME.tags do
         local ret = G.GAME.tags[i]:apply_to_run({type = 'eval'})
+        local revenue = G.GAME.tags[i]:apply_to_run({type = 'eval_interest'})
         if ret then
             add_round_eval_row({dollars = ret.dollars, bonus = true, name='tag'..i, pitch = pitch, condition = ret.condition, pos = ret.pos, tag = ret.tag})
             pitch = pitch + 0.06

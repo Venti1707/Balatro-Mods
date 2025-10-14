@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'c88082b89c54f2c990be0664ba11e3838cc2c6665621aa2632dbe6b3ecf50190'
+LOVELY_INTEGRITY = '1bed2e9e536e7e4eb5bdf21ed3a5429aaebd3ebe9fe43403af0e2ff69d3c488b'
 
 --Class
 Game = Object:extend()
@@ -210,6 +210,9 @@ function Game:start_up()
         Red = Sprite(0, 0, self.CARD_W, self.CARD_H, self.ASSET_ATLAS["centers"], {x = 5,y = 4}),
         Blue = Sprite(0, 0, self.CARD_W, self.CARD_H, self.ASSET_ATLAS["centers"], {x = 6,y = 4}),
     }
+    self.shared_counters_joker = {}
+    self.shared_counters_pcard = {}
+    self.shared_counters_ui = {}
     self.sticker_map = {
         'White','Red','Green','Black','Blue','Purple','Orange','Gold'
     }
@@ -759,6 +762,8 @@ function Game:init_item_prototypes()
     }
 
     self.P_LOCKED = {}
+    self.P_COUNTERS = {}
+    self.P_CENTER_POOLS.Counter = {}
 
     self:save_progress()
 
@@ -1209,6 +1214,7 @@ function Game:delete_run()
         if self.MAIN_MENU_UI then self.MAIN_MENU_UI:remove(); self.MAIN_MENU_UI = nil end
         if self.SPLASH_FRONT then self.SPLASH_FRONT:remove(); self.SPLASH_FRONT = nil end
         if self.SPLASH_BACK then self.SPLASH_BACK:remove(); self.SPLASH_BACK = nil end
+        if self.KINO_SPLASH_LOGO then self.KINO_SPLASH_LOGO:remove(); self.KINO_SPLASH_LOGO = nil end
         if self.SPLASH_LOGO then self.SPLASH_LOGO:remove(); self.SPLASH_LOGO = nil end
         if self.GAME_OVER_UI then self.GAME_OVER_UI:remove(); self.GAME_OVER_UI = nil end
         if self.collection_alert then self.collection_alert:remove(); self.collection_alert = nil end
@@ -1655,6 +1661,26 @@ function Game:main_menu(change_context) --True if main menu is accessed from the
 
 
     local replace_card = Card(self.title_top.T.x, self.title_top.T.y, 1.2*G.CARD_W*SC_scale, 1.2*G.CARD_H*SC_scale, G.P_CARDS.S_A, G.P_CENTERS.c_base)
+    if G.ASSET_ATLAS["kino_splash_screen"] then
+        G.KINO_SPLASH_LOGO = Sprite(0, 0, 
+            13*SC_scale, 
+            13*SC_scale*(G.ASSET_ATLAS["kino_splash_screen"].py/G.ASSET_ATLAS["kino_splash_screen"].px),
+            G.ASSET_ATLAS["kino_splash_screen"], {x=0,y=0})
+    
+        G.KINO_SPLASH_LOGO:set_alignment({
+            major = G.title_top,
+            instance_type = "NODE",
+            type = 'cm',
+            bond = 'Strong',
+            offset = {x=2.25,y=0.33}
+        })
+        G.KINO_SPLASH_LOGO:define_draw_steps({{
+                shader = 'dissolve',
+            }})
+    
+        G.KINO_SPLASH_LOGO.dissolve_colours = {G.C.WHITE, G.C.WHITE}
+        G.KINO_SPLASH_LOGO.dissolve = 1
+    end
     self.title_top:emplace(replace_card)
 
     replace_card:set_seal('Gold', true, true)
@@ -1689,6 +1715,9 @@ function Game:main_menu(change_context) --True if main menu is accessed from the
         func = (function()
             play_sound('magic_crumple'..(change_context == 'splash' and 2 or 3), (change_context == 'splash' and 1 or 1.3), 0.9)
             play_sound('whoosh1', 0.4, 0.8)
+            if G.KINO_SPLASH_LOGO then
+                ease_value(G.KINO_SPLASH_LOGO, 'dissolve', -1, nil, nil, nil, change_context == 'splash' and 2.3 or 0.9)
+            end
             ease_value(G.SPLASH_LOGO, 'dissolve', -1, nil, nil, nil, change_context == 'splash' and 2.3 or 0.9)
             G.VIBRATION = G.VIBRATION + 1.5
             return true
@@ -1837,6 +1866,26 @@ function Game:demo_cta() --True if main menu is accessed from the splash screen,
     G.SPLASH_LOGO.dissolve = 1   
 
     local replace_card = Card(self.title_top.T.x, self.title_top.T.y, 1.2*G.CARD_W*SC_scale, 1.2*G.CARD_H*SC_scale, G.P_CARDS.S_A, G.P_CENTERS.c_base)
+    if G.ASSET_ATLAS["kino_splash_screen"] then
+        G.KINO_SPLASH_LOGO = Sprite(0, 0, 
+            13*SC_scale, 
+            13*SC_scale*(G.ASSET_ATLAS["kino_splash_screen"].py/G.ASSET_ATLAS["kino_splash_screen"].px),
+            G.ASSET_ATLAS["kino_splash_screen"], {x=0,y=0})
+    
+        G.KINO_SPLASH_LOGO:set_alignment({
+            major = G.title_top,
+            instance_type = "NODE",
+            type = 'cm',
+            bond = 'Strong',
+            offset = {x=2.25,y=0.33}
+        })
+        G.KINO_SPLASH_LOGO:define_draw_steps({{
+                shader = 'dissolve',
+            }})
+    
+        G.KINO_SPLASH_LOGO.dissolve_colours = {G.C.WHITE, G.C.WHITE}
+        G.KINO_SPLASH_LOGO.dissolve = 1
+    end
     self.title_top:emplace(replace_card)
 
     replace_card:set_seal('Gold', true, true)
@@ -2407,6 +2456,36 @@ function Game:start_run(args)
 
     set_screen_positions()
 
+        -- Abduction Mechanics
+        self.kino_abductionarea = CardArea(
+            0,
+            0,
+            self.CARD_W * 4.95,
+            self.CARD_H * 0.95,
+            {
+                card_limit = 999,
+                type = "abduction",
+                highlight_limit = 0
+            }
+        )
+        self.kino_abductionarea.states.visible = false
+        Kino.abduction = G.kino_abductionarea
+    
+        -- Confection Mechanics
+        self.kino_snackbag = CardArea(
+            G.consumeables.T.x + 2,
+            G.consumeables.T.y + G.consumeables.T.h + 1,
+            self.CARD_W * 2,
+            self.CARD_H * 0.95,
+            {
+                card_limit = 4,
+                type = 'joker',
+                highlight_limit = 1,
+                card_w = G.CARD_W * 0.1,
+            }
+        )
+        self.kino_snackbag.states.visible = false
+        Kino.snackbag = G.kino_snackbag
     G.SPLASH_BACK = Sprite(-30, -6, G.ROOM.T.w+60, G.ROOM.T.h+12, G.ASSET_ATLAS["ui_1"], {x = 2, y = 0})
     G.SPLASH_BACK:set_alignment({
         major = G.play,
@@ -2506,6 +2585,22 @@ function Game:start_run(args)
                 ::continue::
             end
         end 
+                if args.challenge and args.challenge.deck and args.challenge.deck.rand_enhancement then
+                    local _type = args.challenge.deck.rand_enhancement.key
+                    local _num = args.challenge.deck.rand_enhancement.value
+                
+                    for i = 1, _num do
+                        local _is_set = false
+                        while _is_set == false do
+                            local _picked_card = pseudorandom_element(card_protos, pseudoseed("challenge"))
+                            
+                            if _picked_card.e ~= _type then
+                                _picked_card.e = _type
+                                _is_set = true
+                            end
+                        end
+                    end
+                end
 
         if self.GAME.starting_params.extra_cards then 
             for k, v in pairs(self.GAME.starting_params.extra_cards) do
@@ -2957,6 +3052,12 @@ function Game:draw()
     end
     end
 
+    if G.KINO_SPLASH_LOGO then
+        love.graphics.push()
+        G.KINO_SPLASH_LOGO:translate_container()
+        G.KINO_SPLASH_LOGO:draw()
+        love.graphics.pop()
+    end
     if G.SPLASH_LOGO then
         love.graphics.push()
         G.SPLASH_LOGO:translate_container()
@@ -3339,6 +3440,19 @@ function Game:update_shop(dt)
                                         end
                                         G.load_shop_jokers = nil
                                     else
+                                        
+                                        if G.jokers ~= nil then
+                                            for _, v in ipairs(G.jokers.cards) do
+                                                v:calculate_joker({kino_enter_shop = true})
+                                            end
+                                            for _, v in ipairs(G.consumeables.cards) do
+                                                v:calculate_joker({kino_enter_shop = true})
+                                            end
+                                                for _, v in ipairs(Kino.snackbag.cards) do
+                                                v:calculate_joker({kino_enter_shop = true})
+                                            end
+                                        end
+                                        
                                         for i = 1, G.GAME.shop.joker_max - #G.shop_jokers.cards do
                                             G.shop_jokers:emplace(create_card_for_shop(G.shop_jokers))
                                         end

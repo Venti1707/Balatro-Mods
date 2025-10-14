@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f5a4b5584565678a1e0c99c1d7d4d19af8e7e24c8ec8256a0f9607896c7effbb'
+LOVELY_INTEGRITY = '1ed1517b3ee56d6858505fe9f6db13c92383944cf0650cfbefcc9733bfd475b7'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -1158,6 +1158,9 @@ end
 function check_and_set_high_score(score, amt)
   if not amt or type(amt) ~= 'number' then return end
   if G.GAME.round_scores[score] and math.floor(amt) > (G.GAME.round_scores[score].amt or 0) then
+  if amt > 1 then
+  	G.GAME.current_round.beaten_run_high = G.GAME.current_round.beaten_run_high + 1
+  end
     G.GAME.round_scores[score].amt = math.floor(amt)
   end
   if  G.GAME.seeded  then return end
@@ -1365,6 +1368,12 @@ function set_consumeable_usage(card)
         G.GAME.consumeable_usage_total.planet = G.GAME.consumeable_usage_total.planet + 1
         G.GAME.consumeable_usage_total.tarot_planet = G.GAME.consumeable_usage_total.tarot_planet + 1
       elseif card.config.center.set == 'Spectral' then  G.GAME.consumeable_usage_total.spectral = G.GAME.consumeable_usage_total.spectral + 1
+      elseif card.config.center.set == 'confection' then
+      	if not G.GAME.consumeable_usage_total.confection then
+      		G.GAME.consumeable_usage_total.confection = 0
+      	end
+          G.GAME.current_round.confection_used = true
+      	G.GAME.consumeable_usage_total.confection = G.GAME.consumeable_usage_total.confection + 1
       end
 
       G.GAME.consumeable_usage_total.all = G.GAME.consumeable_usage_total.all + 1

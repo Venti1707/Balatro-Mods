@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '83dcb06ea5827175b74e35226f37406b457d7e74f00893bbba8c5298dc16e492'
+LOVELY_INTEGRITY = '80f03de91167ccdf36701a656cb0bf949a2724a3de8f9a2f4d500c4cac53fdcf'
 
 --- STEAMODDED CORE
 --- MODULE STACKTRACE
@@ -960,6 +960,8 @@ function love.run()
 	end
 end
 
+Kino = {}
+Kino.jokers = {}
 function love.load() 
 	G:start_up()
 	--Steam integration

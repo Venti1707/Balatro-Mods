@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'd24d1810888af53401c3caf550fa6a2ddd96632c116091adf658357e96e26678'
+LOVELY_INTEGRITY = '4c848e3c148c09a03fbe81fe799e54d198d0353447ce3101ccee6d946d741269'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -34,12 +34,19 @@ debugplus.registerButtons()
       else
         G.DT_jimbo:remove()
         G.DT_jimbo = nil
+        if G.KINO_SPLASH_LOGO then
+            print("test true") 
+            G.KINO_SPLASH_LOGO.states.visible = true
+        end
         if G.SPLASH_LOGO then 
           G.SPLASH_LOGO.states.visible = true
           if G.title_top and G.title_top.cards[1] then G.title_top.cards[1].states.visible = true end
         end
       end
     else
+      if G.KINO_SPLASH_LOGO then
+          G.KINO_SPLASH_LOGO.states.visible = false
+      end
       if G.SPLASH_LOGO then 
         G.SPLASH_LOGO.states.visible = false
         if G.title_top and G.title_top.cards[1] then G.title_top.cards[1].states.visible = false end
@@ -1194,6 +1201,10 @@ end
 
       local info_boxes = {}
       local badges = {}
+      local obj = card.counter
+      if obj and type(obj.set_card_type_badge) == 'function' then
+          obj:set_card_type_badge(card, badges)
+      end
 
       local obj = card.config.center
       local multi_boxes = {}
@@ -3578,6 +3589,10 @@ function G.UIDEF.run_info()
             label = localize('b_vouchers'),
             tab_definition_function = G.UIDEF.used_vouchers,
         },
+            {
+            	label = localize('b_questlog'),
+            	tab_definition_function = create_UIBox_quest_log
+            },
         G.GAME.stake > 1 and {
           label = localize('b_stake'),
           tab_definition_function = G.UIDEF.current_stake,
@@ -6589,6 +6604,22 @@ function G.UIDEF.challenge_description_tab(args)
             if keep then card_protos[#card_protos+1] = {s=_s,r=_r,e=_e,d=_d,g=_g} end
         end
     end 
+    if challenge and challenge.deck and challenge.deck.rand_enhancement then
+        local _type = challenge.deck.rand_enhancement.key
+        local _num = challenge.deck.rand_enhancement.value
+    
+        for i = 1, _num do
+            local _is_set = false
+            while _is_set == false do
+                local _picked_card = pseudorandom_element(card_protos, pseudoseed("challenge"))
+                
+                if _picked_card.e ~= _type then
+                    _picked_card.e = _type
+                    _is_set = true
+                end
+            end
+        end
+    end
     for k, v in ipairs(card_protos) do
       local _card = Card(0,0, G.CARD_W*0.45, G.CARD_H*0.45, G.P_CARDS[v.s..'_'..v.r], G.P_CENTERS[v.e or 'c_base'])
       if v.d then _card:set_edition({[v.d] = true}, true, true) end
