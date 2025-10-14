@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '17ef90a7eaf15595e5cf2ec5b726941fe36998a0906e34421328f7598c6e8b51'
+LOVELY_INTEGRITY = '72a3ca4c5d9419b5006129ba3d56d17a8c6e6abcb4ee1811beeb146183eca54b'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -311,6 +311,16 @@ function G.UIDEF.use_and_sell_buttons(card)
       end
   end
   if card.ability.consumeable then
+      if card.config.center.key == 'c_artb_joker_collectable' or card.config.center.key == 'c_artb_limited_edition_collectable' or card.config.center.key == 'c_artb_gros_michel_collectable' or card.config.center.key == 'c_artb_cavendish_collectable' then
+          return {
+          n=G.UIT.ROOT, config = {padding = 0, colour = G.C.CLEAR}, nodes={
+              {n=G.UIT.C, config={padding = 0.15, align = 'cl'}, nodes={
+              {n=G.UIT.R, config={align = 'cl'}, nodes={
+                  sell
+              }},
+              }},
+          }}
+      end
     if (card.area == G.pack_cards and G.pack_cards) then
       return {
         n=G.UIT.ROOT, config = {padding = 0, colour = G.C.CLEAR}, nodes={
