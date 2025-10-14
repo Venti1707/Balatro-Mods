@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'd2148c27b6350ad643cbaa19030c3d5874e9942fe8b719d6824849279481e971'
+LOVELY_INTEGRITY = '9e3905d20da5d6b0b248c258b200f4b2d0d996c15d83e0d1e4afc1e2b06582fa'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -1145,6 +1145,9 @@ end
     if card.ability_UIBox_table then
       local AUT = card.ability_UIBox_table
       local debuffed = card.debuff
+      if debuffed and card.bannermod_no_debuff_tip then
+      	debuffed = false
+      end
       local card_type_colour = get_type_colour(card.config.center or card.config, card)
       local card_type_text_colour = (AUT.card_type and SMODS.ConsumableTypes[AUT.card_type] and SMODS.ConsumableTypes[AUT.card_type].text_colour) or G.C.UI.TEXT_LIGHT
       local card_type_background = 

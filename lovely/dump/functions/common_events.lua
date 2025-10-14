@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'ddfdb56b838618f9a944caeb630b9952b8072c1618169d23f95045265976675d'
+LOVELY_INTEGRITY = '65ac150076dd1647ad8328eae5d8b3c41fba3e73c3f8b2a127ee42707a019311'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -2397,6 +2397,8 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
             elseif _type == 'Voucher' then _pool[#_pool + 1] = "v_blank"
             elseif _type == 'Tag' then _pool[#_pool + 1] = "tag_handy"
             elseif _type == 'Edition' then _pool[#_pool + 1] = "e_foil"
+            elseif _type == 'Enhanced' then _pool[#_pool + 1] = "c_base" -- Banner default
+            elseif _type == 'Seal' then _pool[#_pool + 1] = "Purple" -- Banner default
             else _pool[#_pool + 1] = "j_joker"
             end
         end
@@ -2785,6 +2787,7 @@ function get_new_boss()
         end
     end
     local _, boss = pseudorandom_element(eligible_bosses, pseudoseed('boss'))
+    boss = boss or "bl_wall" -- Banner default
     G.GAME.bosses_used[boss] = G.GAME.bosses_used[boss] + 1
     
     return boss
@@ -2794,7 +2797,7 @@ function get_type_colour(_c, card)
     return 
     ((_c.unlocked == false and not (card and card.bypass_lock)) and G.C.BLACK) or 
     ((_c.unlocked ~= false and (_c.set == 'Joker' or _c.consumeable or _c.set == 'Voucher') and not _c.discoveredand and not ((_c.area ~= G.jokers and _c.area ~= G.consumeables and _c.area) or not _c.area)) and G.C.JOKER_GREY) or
-    (card and card.debuff and mix_colours(G.C.RED, G.C.GREY, 0.7)) or 
+    (card and card.debuff and not card.bannermod_no_debuff_tip and mix_colours(G.C.RED, G.C.GREY, 0.7)) or 
     (_c.set == 'Joker' and G.C.RARITY[_c.rarity]) or 
     (_c.set == 'Edition' and G.C.DARK_EDITION) or 
     (_c.set == 'Booster' and G.C.BOOSTER) or 

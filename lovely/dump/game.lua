@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'f73e9e0092b31b757c50c3b62953406c700dd51a05271b1336c9543377e6384e'
+LOVELY_INTEGRITY = 'b866e1f745419d9bd12a48b8744c543ce18468af4e7ca08a855fef37cc4b611c'
 
 --Class
 Game = Object:extend()
@@ -2217,6 +2217,7 @@ function Game:start_run(args)
     for k, v in pairs(self.GAME.pseudorandom) do if v == 0 then self.GAME.pseudorandom[k] = pseudohash(k..self.GAME.pseudorandom.seed) end end
     self.GAME.pseudorandom.hashed_seed = pseudohash(self.GAME.pseudorandom.seed)
 
+    BANNERMOD.setup_game(not saveTable)
     G:save_settings()
 
     if not self.GAME.round_resets.blind_tags then

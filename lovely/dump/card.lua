@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '6a3088efe989059480acb3ae887b074fba7d9ad3d2a3adca8ca83aa63d6f79dc'
+LOVELY_INTEGRITY = '7f3d08da51f187af8b44fd0a5df9a0894c6b5994e8ba92bb01c84d9b23b1ff51'
 
 --class
 Card = Moveable:extend()
@@ -1576,6 +1576,9 @@ function Card:use_consumeable(area, copier)
                         for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
                             if v.key ~= 'm_stone' then 
                                 cen_pool[#cen_pool+1] = v
+                                if G.GAME.bannermod_disabled[v.key] then
+                                	cen_pool[#cen_pool] = nil
+                                end
                             end
                         end
                         create_playing_card({front = G.P_CARDS[_suit..'_'.._rank], center = pseudorandom_element(cen_pool, pseudoseed('spe_card'))}, G.hand, nil, i ~= 1, {G.C.SECONDARY_SET.Spectral})
@@ -4945,6 +4948,7 @@ function Card:highlight(is_higlighted)
 end
 
 function Card:click() 
+	if BANNERMOD.config.left_click and BANNERMOD.handle_collection_click_card(self) then return end
     if self.area and self.area:can_highlight(self) then
         if (self.area == G.hand) and (G.STATE == G.STATES.HAND_PLAYED) then return end
         if self.highlighted ~= true then 

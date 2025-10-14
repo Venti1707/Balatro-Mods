@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'bd024e23474b3ae6b8535ce60399f6c702d2cd47326630f9bc66b617767cd8f0'
+LOVELY_INTEGRITY = 'a7046002a709d9cb67d7b6e25826e87d06082364630f6d3969186dc4d509f4a0'
 
 --- STEAMODDED CORE
 --- OVERRIDES
@@ -416,6 +416,8 @@ function create_UIBox_your_collection_tags_content(page)
 			local temp_tag = Tag(v.key, true)
 			if not v.discovered then temp_tag.hide_ability = true end
 			local temp_tag_ui, temp_tag_sprite = temp_tag:generate_UI()
+			temp_tag_sprite.bannermod_in_collection = true
+			temp_tag_sprite.bannermod_disabled = false
 			tag_matrix[row][col] = {
 				n = G.UIT.C,
 				config = { align = "cm", padding = 0.1 },
@@ -2056,6 +2058,7 @@ function poll_edition(_key, _mod, _no_neg, _guaranteed, _options)
 			end
 		end
 	end
+    _options = BANNERMOD.apply_editions(_options)
     for _, v in ipairs(_options) do
         local edition_option = {}
         if type(v) == 'string' then
