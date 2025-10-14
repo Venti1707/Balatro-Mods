@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '0cec619b8d610a68842df7f1ef0fd4394466d22fbcf3eea4c25b5797db88c7f3'
+LOVELY_INTEGRITY = '35e125d9a10c3c1e92849731b3f04ebc943b9c1a5f487c75104e8008d0de43b9'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -3159,6 +3159,14 @@ function create_UIBox_game_over()
               {n=G.UIT.T, config={text = localize('b_main_menu'), scale = 0.5, colour = G.C.UI.TEXT_LIGHT}}
             }}
           }}
+                    ,{n=G.UIT.R, config={align = "cm", minw = 5, padding = 0.1, r = 0.1, hover = true, colour = G.C.RED, button = "exit_overlay_menu", shadow = true, focus_args = {nav = 'wide'}}, nodes={
+                      {n=G.UIT.R, config={align = "cm", padding = 0, no_fill = true, maxw = 4.8}, nodes={
+                        {n=G.UIT.T, config={text = 'Dismiss', scale = 0.5, colour = G.C.UI.TEXT_LIGHT}}
+                      }}
+                    }},
+                    {n=G.UIT.R, config={align = "cm"}, nodes={
+                      {n=G.UIT.T, config={text = 'Modified by DebugPlusPlus', scale = 0.3, colour = G.C.GREY}}
+                    }},
         }}
       }},
     }}

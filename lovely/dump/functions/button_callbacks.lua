@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1f4655f53b0969df2b79a383523bf3feb3f8c7fb5326fd240055dc8f4d99057b'
+LOVELY_INTEGRITY = '7633cc5d681486e81cadf00410a2f3a2f1ca3fd4a34316406f08b5dccac39103'
 
 --Moves the tutorial to the next step in queue
 --
@@ -981,7 +981,6 @@ G.FUNCS.text_input_key = function(args)
   args = args or {}
 
 
-  if args.key == '0' and G.CONTROLLER.text_input_hook.config.ref_table and G.CONTROLLER.text_input_hook.config.ref_table.ref_value == "setup_seed" then args.key = 'o' end
 
   --shortcut to hook config
   local hook_config = G.CONTROLLER.text_input_hook.config.ref_table
@@ -1000,7 +999,7 @@ G.FUNCS.text_input_key = function(args)
     left = 'LEFT'
   }
   local hook = G.CONTROLLER.text_input_hook
-  local corpus = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'..(hook.config.ref_table.extended_corpus and " 0!$&()<>?:{}+-=,.[]_" or '')
+    local corpus = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.." 0!$&()<>?:{}+-=,.[]_"
   
   if hook.config.ref_table.extended_corpus then 
         local lower_ext = '1234567890-=;\',./[]'

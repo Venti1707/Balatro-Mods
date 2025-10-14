@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '3e4bc7592ff12f78d3af0456c55b98ee595bcf4ed695cbcf3d241650d40e5dfd'
+LOVELY_INTEGRITY = 'e5203c6a00a0e0e5583e3a092c4067e1df11a57c13aa1f37b3aaba8fa7bb1d54'
 
 ---@class Controller
 Controller = Object:extend()
@@ -829,7 +829,7 @@ function Controller:key_press_update(key, dt)
         end
     end
     if not _RELEASE_MODE and require("debugplus.core").isOkayToHandleDebugForKey(key) then
-        if key == 'tab' and not G.debug_tools then
+                if key == 'tab' and not G.debug_tools and DPP.config.open_og_debug then
             G.debug_tools = UIBox{
                 definition = create_UIBox_debug_tools(),
                 config = {align='cr', offset = {x=G.ROOM.T.x + 11,y=0},major = G.ROOM_ATTACH, bond = 'Weak'}
