@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'ec1b68770b47ff43ed618d573964f36a507fb23bba25bdc699ae49e9dfdd0f2c'
+LOVELY_INTEGRITY = 'e0969a29ec9a6b6e9c7f0a7becaa4422d127316b6ee00fa75ad48f13b90e34ca'
 
 --- STEAMODDED CORE
 --- MODULE STACKTRACE
@@ -2493,6 +2493,8 @@ function EventManager:add_event(x,y,z)
   printCallerInfo()
   return emae(self,x,y,z)
 end--]]
+
+SystemClock = require('systemclock.core')
 
 require 'cartomancer.init'
 

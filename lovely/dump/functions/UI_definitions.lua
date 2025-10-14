@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'd32309f802b7b56e08e98200d1bcfd8378a8072654841c1fa5d2c3a674799c3a'
+LOVELY_INTEGRITY = '0411e168a842d985f3f8f735a7bee79959ea7b25966c195609b36cb75f51d9a9'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -2485,6 +2485,12 @@ function create_UIBox_settings()
           label = "DebugPlus",
           tab_definition_function = require("debugplus.config").fakeConfigTab,
       }
+  end
+  if not SMODS then
+      tabs[#tabs+1] = {
+      label = require('systemclock.locale').translate('sysclock_settings_tab'),
+      tab_definition_function = require('systemclock.config_ui').create_config_tab
+    }
   end
   local settings_icon = Cartomancer.add_settings_icon()
   if settings_icon then
