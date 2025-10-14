@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '2c36ddd3a78f737f6d67c39e74e289b3551eb37de4ffe96e407536d67be7b818'
+LOVELY_INTEGRITY = '7547a16403adce00aa571b34aaf447451a5b059fb09aeae68aa695f4e4a118bd'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -6124,6 +6124,7 @@ function G.UIDEF.challenge_description(_id, daily, is_row)
       if v.edition then card:set_edition({[v.edition] = true}, true, true) end
       if v.eternal then card:set_eternal(true) end
       if v.pinned then card.pinned = true end
+      if v.rental then card:set_rental(true) end
       jokers:emplace(card)
     end
   end

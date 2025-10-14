@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '280fb8319bd2d22d7c14e971460681cad9dd0da7efcbff04d392383de0aa1b42'
+LOVELY_INTEGRITY = '44d84bebb1eb177786bc0fe299257f61f503dca00a80460577035e787239fe97'
 
 function set_screen_positions()
     if G.STAGE == G.STAGES.RUN then
@@ -2442,6 +2442,22 @@ local rarity = _rarity or SMODS.poll_rarity("Joker", 'rarity'..G.GAME.round_rese
                 add = in_pool and (add or pool_opts.override_base_checks)
             end
             if add and not G.GAME.banned_keys[v.key] then 
+                -- If the selected deck is the Aid deck and this key is a Modded Joker, add copies of it
+                -- to the pool, so that it is more common to get
+                if (G.GAME.selected_back_key or {}).key == 'b_bb_aid' and v.key:find('j_bb_') then
+                  for i = 1, 4 do
+                    _pool[#_pool + 1] = v.key
+                    _pool_size = _pool_size + 1
+                  end
+                end
+                -- make tower and justice more common
+                --if (G.GAME.selected_back_key or {}).key == 'b_bb_aid' and v.key:find('c_') then
+                --  for i = 1, 20 do
+                --    _pool[#_pool + 1] = 'c_justice'
+                --    _pool[#_pool + 1] = 'c_tower'
+                --    _pool_size = _pool_size + 2
+                --  end
+                --end
                 _pool[#_pool + 1] = v.key
                 _pool_size = _pool_size + 1
             else

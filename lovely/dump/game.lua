@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'cd3602dcf7088a5b526e194af1b514a9f2149196da67fc67bbf43e270e4f018e'
+LOVELY_INTEGRITY = 'b20360e81c2c9b6b3cdeddfcb5d4f94e206e4800ebeb53d96a40cd8b46413320'
 
 --Class
 Game = Object:extend()
@@ -2146,6 +2146,7 @@ function Game:start_run(args)
                             local _joker = add_joker(v.id, v.edition, k ~= 1)
                             if v.eternal then _joker:set_eternal(true) end
                             if v.pinned then _joker.pinned = true end
+                            if v.rental then _joker:set_rental(true) end
                         return true
                         end
                     }))
