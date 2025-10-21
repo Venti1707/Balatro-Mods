@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'fc8754f159e5c1b8167bdd73e7f6dd775a717f963ee992d947a2f26e9844a3ae'
+LOVELY_INTEGRITY = 'b26d2abf9956112ef1d24823239d704a2e170826e660a2a875afe636aed35266'
 
 --Class
 DynaText = Moveable:extend()
@@ -27,6 +27,7 @@ function DynaText:init(config)
     self.config.scroll_speed = self.config.scroll_speed or self.config.marquee and 0.1 or nil
 
     self.start_pop_in = self.config.pop_in
+    self.akyrs_stay_on_top = config.akyrs_stay_on_top
 
     config.W = 0
     config.H = 0
@@ -37,6 +38,7 @@ function DynaText:init(config)
     self:update_text(true)
     if self.config.maxw and self.config.W > self.config.maxw and not self.config.marquee then
         self.start_pop_in = self.config.pop_in
+        self.akyrs_stay_on_top = config.akyrs_stay_on_top
         self.scale = self.scale*(self.config.maxw/self.config.W)
         self:update_text(true)
     end
@@ -88,6 +90,9 @@ function DynaText:update_text(first_pass)
             local part_scale = 1
             if type(v) == 'table' and (v.ref_table or v.string) then
                 new_string = (v.prefix or '')..format_ui_value(v.ref_table and v.ref_table[v.ref_value] or v.string)..(v.suffix or '')
+                if self.config.akyrs_number_format then
+                    new_string = (v.prefix or '')..number_format(v.ref_table and v.ref_table[v.ref_value] or v.string, self.config.akyrs_number_format)..(v.suffix or '')
+                end
                 part_a = #(v.prefix or '')
                 part_b = #new_string - #(v.suffix or '')
                 if v.scale then part_scale = v.scale end

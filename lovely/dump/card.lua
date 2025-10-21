@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'fbd41dba214cbf8c3799ecd138fa762659111c04cf954fbf9f355e5aa872d3d4'
+LOVELY_INTEGRITY = '659c154b5c3bee457c950eb06875aee02ffa00212bdb8f8594c93ad3b5ac9df1'
 
 --class
 Card = Moveable:extend()
@@ -148,13 +148,16 @@ SMODS.enh_cache:write(self, nil)
     self.base.suit_nominal = suit.suit_nominal or 0
     self.base.suit_nominal_original = suit_base_nominal_original or suit.suit_nominal or 0
 
+    if G.GAME.blind and G.GAME.blind.debuff_card then
     if not initial and delay_sprites ~= "quantum" and G.GAME.blind then G.GAME.blind:debuff_card(self) end
+    end
     if self.playing_card and not initial then check_for_unlock({type = 'modify_deck'}) end
 end
 
 function Card:set_sprites(_center, _front)
     if _front then 
         local _atlas, _pos = get_front_spriteinfo(_front)
+        _atlas, _pos = AKYRS.sprite_info_override(_center, _front, self, _atlas, _pos)
         if self.children.front then
             self.children.front.atlas = _atlas
             self.children.front:set_sprite_pos(_pos)
@@ -374,6 +377,8 @@ function Card:set_ability(center, initial, delay_sprites)
         perma_h_x_mult = self.ability and self.ability.perma_h_x_mult or 0,
         perma_p_dollars = self.ability and self.ability.perma_p_dollars or 0,
         perma_h_dollars = self.ability and self.ability.perma_h_dollars or 0,
+        akyrs_perma_score = self.ability and self.ability.akyrs_perma_score or 0,
+        akyrs_perma_h_score = self.ability and self.ability.akyrs_perma_h_score or 0,
         perma_repetitions = self.ability and self.ability.perma_repetitions or 0,
         card_limit = self.ability and self.ability.card_limit or 0,
         extra_slots_used = self.ability and self.ability.extra_slots_used or 0,
@@ -490,7 +495,9 @@ function Card:set_ability(center, initial, delay_sprites)
         check_for_unlock({type = 'modify_jokers'})
     end
 
+    if G.GAME.blind and G.GAME.blind.debuff_card then
     if not initial and delay_sprites ~= "quantum" and G.GAME.blind then G.GAME.blind:debuff_card(self) end
+    end
     if self.playing_card and not initial then check_for_unlock({type = 'modify_deck'}) end
 end
 
@@ -915,6 +922,8 @@ function Card:generate_UIBox_ability_table(vars_only)
         loc_vars = { playing_card = not not self.base.colour, value = self.base.value, suit = self.base.suit, colour = self.base.colour,
                     nominal_chips = self.base.nominal > 0 and self.base.nominal or nil,
                     bonus_x_chips = self.ability.perma_x_chips ~= 0 and (self.ability.perma_x_chips + 1) or nil,
+                    akyrs_perma_score = self.ability.akyrs_perma_score ~= 0 and (self.ability.akyrs_perma_score) or nil,
+                    akyrs_perma_h_score = self.ability.akyrs_perma_h_score ~= 0 and (self.ability.akyrs_perma_h_score) or nil,
                     bonus_mult = self.ability.perma_mult ~= 0 and self.ability.perma_mult or nil,
                     bonus_x_mult = self.ability.perma_x_mult ~= 0 and (self.ability.perma_x_mult + 1) or nil,
                     bonus_h_chips = self.ability.perma_h_chips ~= 0 and self.ability.perma_h_chips or nil,
@@ -1141,6 +1150,10 @@ function Card:generate_UIBox_ability_table(vars_only)
     end
     if vars_only then return loc_vars, main_start, main_end end
     local badges = {}
+                loc_vars = loc_vars or {}
+                -- if (self.is_null or SMODS.has_enhancement(self, "m_akyrs_scoreless")) and loc_vars then
+                --     loc_vars.nominal_chips = nil
+                -- end
     if (card_type ~= 'Locked' and card_type ~= 'Undiscovered' and card_type ~= 'Default') or self.debuff then
         badges.card_type = card_type
     end
@@ -1323,9 +1336,19 @@ function Card:get_end_of_round_effect(context)
                 if G.GAME.last_hand_played then
                     local _planet = 0
                     for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                        if v.config.hand_type then
                         if v.config.hand_type == G.GAME.last_hand_played and not v.config.moon then
                             _planet = v.key
                         end
+                            end
+                            if v.config.akyrs_hand_types then
+                                for _, h in pairs(v.config.akyrs_hand_types) do
+                                    if h == G.GAME.last_hand_played then
+                                        _planet = v.key
+                                        break
+                                    end
+                                end
+                            end
                     end
                     if _planet == 0 then
                     _planet = AUtils.contains({
@@ -1765,6 +1788,14 @@ function Card:use_consumeable(area, copier)
             end
             return true end }))
         delay(0.6)
+    end
+    if self.ability.name == 'The Wheel of Fortune' then
+        if next(SMODS.find_card("j_akyrs_tsunagite")) then
+            SMODS.calculate_effect({
+                message = localize("k_akyrs_tsunagi_absurd_wheel_nope")
+            },self)
+            return
+        end
     end
     if self.ability.name == 'The Wheel of Fortune' or self.ability.name == 'Ectoplasm' or self.ability.name == 'Hex' then
         local temp_pool =   (self.ability.name == 'The Wheel of Fortune' and self.eligible_strength_jokers) or 
@@ -4564,6 +4595,22 @@ function Card:update(dt)
         end
     end
 
+    if self.flipping == 'akyrs_f2b_y' then
+        if self.sprite_facing == 'front' or true then
+            if self.VT.h <= 0 then
+                self.sprite_facing = 'back'
+                self.pinch.y =false
+            end
+        end
+    end
+    if self.flipping == 'akyrs_b2f_y' then
+        if self.sprite_facing == 'back' or true then
+            if self.VT.h <= 0 then
+                self.sprite_facing = 'front'
+                self.pinch.y =false
+            end
+        end
+    end
     if not self.states.focus.is and self.children.focused_ui then
         self.children.focused_ui:remove()
         self.children.focused_ui = nil
@@ -4790,9 +4837,11 @@ function Card:hover()
             G:save_progress()
         end
 
+        if not AKYRS.should_hide_ui() then
         self.ability_UIBox_table = self:generate_UIBox_ability_table()
         self.config.h_popup = G.UIDEF.card_h_popup(self)
         self.config.h_popup_config = self:align_h_popup()
+        end
 
         Node.hover(self)
     end
@@ -4886,16 +4935,30 @@ function Card:draw(layer)
             love.graphics.setShader()
         elseif self.sprite_facing == 'front' then 
             --Draw the main part of the card
+                    self.front_bak = self.children.front
+                    if self.is_null then
+                        self.children.front = nil
+                    else
+                        self.children.front = self.front_bak
+                    end
             if (self.edition and self.edition.negative) or (self.ability.name == 'Antimatter' and (self.config.center.discovered or self.bypass_discovery_center)) then
                 self.children.center:draw_shader('negative', nil, self.ARGS.send_to_shader)
                 if self.children.front and self.ability.effect ~= 'Stone Card' then
-                    self.children.front:draw_shader('negative', nil, self.ARGS.send_to_shader)
+                    if not self.is_null then
+                    if not (self.is_null) then 
+                        --print("WTF")
+                        self.children.front:draw_shader('negative', nil, self.ARGS.send_to_shader)
+                    end
+
+                    end
                 end
             elseif not self.greyed then
                 self.children.center:draw_shader('dissolve')
                 --If the card has a front, draw that next
                 if self.children.front and self.ability.effect ~= 'Stone Card' then
+                    if not self.is_null then
                     self.children.front:draw_shader('dissolve')
+                    end
                 end
             end
 
@@ -4903,7 +4966,11 @@ function Card:draw(layer)
             if self.texture_selected then
                 self.children.center:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
                 if self.children.front then
-                    self.children.front:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
+                    if not (self.is_null) then 
+                        --print("WTF")
+                        self.children.front:draw_shader('malverk_texture_selected', nil, self.ARGS.send_to_shader)
+                    end
+
                 end
             end
             if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center then
@@ -4938,19 +5005,31 @@ function Card:draw(layer)
                 if self.edition and self.edition.holo then
                     self.children.center:draw_shader('holo', nil, self.ARGS.send_to_shader)
                     if self.children.front and self.ability.effect ~= 'Stone Card' then
-                        self.children.front:draw_shader('holo', nil, self.ARGS.send_to_shader)
+                        if not (self.is_null) then 
+                            --print("WTF")
+                            self.children.front:draw_shader('holo', nil, self.ARGS.send_to_shader)
+                        end
+
                     end
                 end
                 if self.edition and self.edition.foil then
                     self.children.center:draw_shader('foil', nil, self.ARGS.send_to_shader)
                     if self.children.front and self.ability.effect ~= 'Stone Card' then
-                        self.children.front:draw_shader('foil', nil, self.ARGS.send_to_shader)
+                        if not (self.is_null) then 
+                            --print("WTF")
+                            self.children.front:draw_shader('foil', nil, self.ARGS.send_to_shader)
+                        end
+
                     end
                 end
                 if self.edition and self.edition.polychrome then
                     self.children.center:draw_shader('polychrome', nil, self.ARGS.send_to_shader)
                     if self.children.front and self.ability.effect ~= 'Stone Card' then
-                        self.children.front:draw_shader('polychrome', nil, self.ARGS.send_to_shader)
+                        if not (self.is_null) then 
+                            --print("WTF")
+                            self.children.front:draw_shader('polychrome', nil, self.ARGS.send_to_shader)
+                        end
+
                     end
                 end
                 if (self.edition and self.edition.negative) or (self.ability.name == 'Antimatter' and (self.config.center.discovered or self.bypass_discovery_center)) then
@@ -5019,13 +5098,24 @@ function Card:draw(layer)
                 if self.debuff then
                     self.children.center:draw_shader('debuff', nil, self.ARGS.send_to_shader)
                     if self.children.front and self.ability.effect ~= 'Stone Card' then
-                        self.children.front:draw_shader('debuff', nil, self.ARGS.send_to_shader)
+                        if not (self.is_null) then 
+                            --print("WTF")
+                            self.children.front:draw_shader('debuff', nil, self.ARGS.send_to_shader)
+                        end
+
                     end
                 end
+                AKYRS.aikoyori_draw_extras(self, layer)
                 if self.greyed then
                     self.children.center:draw_shader('played', nil, self.ARGS.send_to_shader)
                     if self.children.front and self.ability.effect ~= 'Stone Card' then
-                        self.children.front:draw_shader('played', nil, self.ARGS.send_to_shader)
+                        if not self.is_null then
+                        if not (self.is_null) then 
+                            --print("WTF")
+                            self.children.front:draw_shader('played', nil, self.ARGS.send_to_shader)
+                        end
+
+                        end
                     end
                 end
             end 

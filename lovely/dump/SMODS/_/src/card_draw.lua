@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'fbf3353a3a537033fb48522a2b34819f3e9f6bbf0270acf034b7f90cbb34f112'
+LOVELY_INTEGRITY = '1bf87dfe61417046069716ea33f63b5a7b915ad3db0aa0feecaca50c95d64a2b'
 
 SMODS.DrawSteps = {}
 SMODS.DrawStep = SMODS.GameObject:extend {
@@ -401,9 +401,13 @@ SMODS.DrawStep {
         end
 
         if self.area and self.area.config.type == 'deck' then
+            if not AKYRS.back_render_override(self, self.children.back, overlay) then
             self.children.back:draw(overlay)
+            end
         else
+            if not AKYRS.back_render_override(self, self.children.back) then
             self.children.back:draw_shader('dissolve')
+            end
         end
     end,
     conditions = { vortex = false, facing = 'back' },

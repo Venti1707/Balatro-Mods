@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '5f42b8f3adbff96051b7ed7dcdc4ce4b660756cd7190eb9f953280fe22fcb72a'
+LOVELY_INTEGRITY = '898ffbe0c33e68e010a6e5c7b35a7bcc8e2a9f7df09d75dcf72fe3b4229c5657'
 
 ---@class Node
 Node = Object:extend()
@@ -118,7 +118,7 @@ function Node:draw_boundingrect()
         end
         if self.CALCING then 
             love.graphics.setColor({0,0,1,1}) 
-            love.graphics.setLineWidth(3)
+                        love.graphics.setLineWidth(1)
         end
         love.graphics.rectangle('line', 0, 0, transform.w*G.TILESIZE,transform.h*G.TILESIZE, 3)
         love.graphics.pop() 

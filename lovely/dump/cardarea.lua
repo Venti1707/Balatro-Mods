@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '80ca0daf81e8d2ea1185588db3206bd6b1ef1c1a367b7f7176bc16ed8d436c3a'
+LOVELY_INTEGRITY = 'f921b17f54e1048e2e2b3cafc95bb2ea147b17f9877642b55db24d9eddad2e3b'
 
 --Class
 CardArea = Moveable:extend()
@@ -34,16 +34,25 @@ function CardArea:init(X, Y, W, H, config)
     self.cards = {}
     self.children = {}
     self.highlighted = {}
-    self.config.highlighted_limit = config.highlight_limit or 5
+        self.config.highlighted_limit = config.highlight_limit or G.GAME.aiko_cards_playable or 5
     self.config.card_limit = config.card_limit or 52
     self.config.true_card_limit = self.config.card_limit
     self.config.temp_limit = self.config.card_limit
     self.config.card_count = 0
     self.config.type = config.type or 'deck'
     self.config.sort = config.sort or 'desc'
+    self.config.akyrs_emplace_func = config.akyrs_emplace_func or nil
+    self.config.akyrs_sol_emplace_func = config.akyrs_sol_emplace_func or nil
+    self.config.akyrs_pile_drag = config.akyrs_pile_drag or nil
     self.config.lr_padding = config.lr_padding or 0.1
     self.shuffle_amt = 0
 
+    if G.GAME and G.GAME.aiko_cards_playable then 
+        self.config.highlighted_limit = math.max(self.config.highlighted_limit, G.GAME.aiko_cards_playable) or 5
+    end
+    if Cryptid and G.GAME and G.GAME.modifiers and G.GAME.modifiers.cry_highlight_limit then 
+        self.config.highlighted_limit = math.max(self.config.highlighted_limit, G.GAME.modifiers.cry_highlight_limit) or 5
+    end
     if getmetatable(self) == CardArea then 
         table.insert(G.I.CARDAREA, self)
     end
@@ -218,7 +227,10 @@ function CardArea:parse_highlighted()
                 parameter.current = G.GAME.hands[text][name] or parameter.default_value
                 update_hand_text({immediate = true, nopulse = nil, delay = 0}, {[name] = parameter.current})
             end
+            if AKYRS.hand_display_mod(self.highlighted,text,disp_text,poker_hands) then
+            else
             update_hand_text({immediate = true, nopulse = nil, delay = 0}, {handname=disp_text, level=G.GAME.hands[text].level, mult = G.GAME.hands[text].mult, chips = G.GAME.hands[text].chips})
+            end
         end
     end
 end
@@ -313,6 +325,11 @@ function CardArea:draw()
     local state = G.TAROT_INTERRUPT or G.STATE
 
     self.ARGS.invisible_area_types = self.ARGS.invisible_area_types or {discard=1, voucher=1, play=1, consumeable=1, title = 1, title_2 = 1}
+    self.ARGS.invisible_area_types["akyrs_credits"] = 1
+    self.ARGS.invisible_area_types["akyrs_solitaire_foundation"] = 1
+    self.ARGS.invisible_area_types["akyrs_solitaire_tableau"] = 1
+    self.ARGS.invisible_area_types["akyrs_solitaire_waste"] = 1
+    self.ARGS.invisible_area_types["akyrs_cards_temporary_dragged"] = 1
     if self.ARGS.invisible_area_types[self.config.type] or
         (self.config.type == 'hand' and ({[G.STATES.SHOP]=1, [G.STATES.TAROT_PACK]=1, [G.STATES.SPECTRAL_PACK]=1, [G.STATES.STANDARD_PACK]=1,[G.STATES.BUFFOON_PACK]=1,[G.STATES.PLANET_PACK]=1, [G.STATES.ROUND_EVAL]=1, [G.STATES.BLIND_SELECT]=1})[state]) or
         (self.config.type == 'hand' and state == G.STATES.SMODS_BOOSTER_OPENED) or
@@ -517,7 +534,7 @@ function CardArea:align_cards()
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end
-        table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 < b.T.x + b.T.w/2 end)
+                table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 - 100*(a.pinned and a.sort_id or 0) < b.T.x + b.T.w/2 - 100*(b.pinned and b.sort_id or 0) end)
     end  
     if self.config.type == 'hand' and not (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.PLANET_PACK or G.STATE == G.STATES.SMODS_BOOSTER_OPENED) then
         local max_cards_override = (Cartomancer.SETTINGS.dynamic_hand_align and self.config.temp_limit - #self.cards > 5) and math.max(#self.cards, math.min(10, self.config.temp_limit))
@@ -536,7 +553,7 @@ function CardArea:align_cards()
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end
-        table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 < b.T.x + b.T.w/2 end)
+                table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 - 100*(a.pinned and a.sort_id or 0) < b.T.x + b.T.w/2 - 100*(b.pinned and b.sort_id or 0) end)
     end  
     if self.config.type == 'title' or (self.config.type == 'voucher' and #self.cards == 1) then
         for k, card in ipairs(self.cards) do
@@ -551,7 +568,7 @@ function CardArea:align_cards()
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end
-        table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 < b.T.x + b.T.w/2 end)
+                table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 - 100*(a.pinned and a.sort_id or 0) < b.T.x + b.T.w/2 - 100*(b.pinned and b.sort_id or 0) end)
     end  
     if self.config.type == 'voucher' and #self.cards > 1 then
         local self_w = math.max(self.T.w, 3.2)
@@ -582,7 +599,7 @@ function CardArea:align_cards()
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end
-        table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 < b.T.x + b.T.w/2 end)
+                table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 - 100*(a.pinned and a.sort_id or 0) < b.T.x + b.T.w/2 - 100*(b.pinned and b.sort_id or 0) end)
     end 
     if self == G.jokers and G.jokers.cart_jokers_expanded then
         local align_cards = Cartomancer.expand_G_jokers()
@@ -631,7 +648,7 @@ function CardArea:align_cards()
                 card.T.x = card.T.x + card.shadow_parrallax.x/30
             end
         end
-        table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 < b.T.x + b.T.w/2 end)
+                table.sort(self.cards, function (a, b) return a.T.x + a.T.w/2 - 100*(a.pinned and a.sort_id or 0) < b.T.x + b.T.w/2 - 100*(b.pinned and b.sort_id or 0) end)
     end   
     for k, card in ipairs(self.cards) do
         card.rank = k

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '113bfffaac413d540d5b0ebd6139b5ba91f31d730041394995ca865d9eb3c9f1'
+LOVELY_INTEGRITY = '5d5838abc07fbb8fa670bd3ac0be8d0de5315ff0c88f143d6c07a0b3bebe4289'
 
 --- STEAMODDED CORE
 --- OVERRIDES
@@ -26,6 +26,7 @@ G.FUNCS.HUD_blind_debuff = function(e)
 				{n = G.UIT.T, config = {ref_table = G.GAME.blind.loc_debuff_lines, ref_value = i, scale = scale * 0.9, colour = G.C.UI.TEXT_LIGHT}}}}
 			e.UIBox:set_parent_child(node_def, e)
 		end
+	num_lines = num_lines + AKYRS.rows_needed_for_icon()
 	elseif num_lines < #e.children then
 		for i = num_lines+1, #e.children do
 			e.children[i]:remove()
@@ -33,7 +34,7 @@ G.FUNCS.HUD_blind_debuff = function(e)
 		end
 	end
 	e.UIBox:recalculate()
-	assert(G.HUD_blind == e.UIBox)
+
 end
 
 function create_UIBox_your_collection_blinds(exit)
@@ -1756,6 +1757,7 @@ end
 function Card:set_sprites(_center, _front)
     if _front then
         local _atlas, _pos = get_front_spriteinfo(_front)
+        _atlas, _pos = AKYRS.sprite_info_override(_center, _front, self, _atlas, _pos)
         if self.children.front then self.children.front:remove() end
 		self.children.front = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, _atlas, _pos)
 		self.children.front.states.hover = self.states.hover

@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'bd5efe425eae2e888f3cc3cc830bd67491b1a083135b1834e96a98e187aa3fb0'
+LOVELY_INTEGRITY = '36c01df7c1fcc89f8c86200878bce836914bfb120987c6712a03c6b28056eeb4'
 
 --- STEAMODDED CORE
 --- MODULE API
@@ -1221,6 +1221,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
             end
+            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
+            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
+            end
             desc_nodes.background_colour = res.background_colour
         end
     }
@@ -1447,6 +1450,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 desc_nodes.name = localize{type = 'name_text', key = res.name_key or target.key, set = 'Other' }
             end
             localize(target)
+            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
+            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
+            end
             desc_nodes.background_colour = res.background_colour
         end,
         --[[
@@ -1857,6 +1863,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             localize(target)
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
+            end
+            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
+            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
             end
             desc_nodes.background_colour = res.background_colour
         end,
@@ -2981,6 +2990,9 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             localize(target)
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
+            end
+            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
+            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
             end
             desc_nodes.background_colour = res.background_colour
         end

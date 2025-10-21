@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1a960160674de863f068864e1d4dc9db5f7f7d49a35386fe8d1190d9f737ea37'
+LOVELY_INTEGRITY = '2a220d314488f5c942d8b580fc2dbe577fb46d6d29d5d5ee60c3482780277e1b'
 
 --Moves the tutorial to the next step in queue
 --
@@ -470,7 +470,7 @@ end
 function G.FUNCS.toggle_button(e)
   e.config.ref_table.ref_table[e.config.ref_table.ref_value] = not e.config.ref_table.ref_table[e.config.ref_table.ref_value]
   if e.config.toggle_callback then 
-    e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value])
+        e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value], e) -- patched by aikyoori lmaooo
   end
 end
 
@@ -2230,7 +2230,9 @@ end
     end
     if G.shop and not G.shop.alignment.offset.py then
       G.shop.alignment.offset.py = G.shop.alignment.offset.y
+      if G.shop then
       G.shop.alignment.offset.y = G.ROOM.T.y + 29
+      end
     end
     if G.blind_select and not G.blind_select.alignment.offset.py then
       G.blind_select.alignment.offset.py = G.blind_select.alignment.offset.y
@@ -2551,7 +2553,9 @@ end
       G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
+          if G.shop then
           G.shop.alignment.offset.y = G.ROOM.T.y + 29
+          end
           G.SHOP_SIGN.alignment.offset.y = -15
           return true
         end
@@ -3005,7 +3009,11 @@ G.FUNCS.cash_out = function(e)
               if not G.GAME.modifiers.carryover_hands then
                   G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
               end
+              if G.GAME.akyrs_always_skip_shops then
+                  G.STATE = G.STATES.BLIND_SELECT
+              else
               G.STATE = G.STATES.SHOP
+              end
               G.GAME.shop_free = nil
               G.GAME.shop_d6ed = nil
               G.STATE_COMPLETE = false
