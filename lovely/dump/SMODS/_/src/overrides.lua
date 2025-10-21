@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = 'beb41b64534231e462b3e7a24936a0435c6b3f7a92675611ce7ae251e2709ce5'
+LOVELY_INTEGRITY = '113bfffaac413d540d5b0ebd6139b5ba91f31d730041394995ca865d9eb3c9f1'
 
 --- STEAMODDED CORE
 --- OVERRIDES
@@ -26,7 +26,6 @@ G.FUNCS.HUD_blind_debuff = function(e)
 				{n = G.UIT.T, config = {ref_table = G.GAME.blind.loc_debuff_lines, ref_value = i, scale = scale * 0.9, colour = G.C.UI.TEXT_LIGHT}}}}
 			e.UIBox:set_parent_child(node_def, e)
 		end
-	num_lines = num_lines + AKYRS.rows_needed_for_icon()
 	elseif num_lines < #e.children then
 		for i = num_lines+1, #e.children do
 			e.children[i]:remove()
@@ -34,7 +33,7 @@ G.FUNCS.HUD_blind_debuff = function(e)
 		end
 	end
 	e.UIBox:recalculate()
-
+	assert(G.HUD_blind == e.UIBox)
 end
 
 function create_UIBox_your_collection_blinds(exit)
@@ -569,8 +568,7 @@ function SMODS.check_applied_stakes(stake, deck)
 end
 
 function G.UIDEF.stake_option(_type)
-	G.viewed_stake = G.viewed_stake or 1
-
+	
 	local middle = {n=G.UIT.R, config={align = "cm", minh = 1.7, minw = 7.3}, nodes={
 		{n=G.UIT.O, config={id = nil, func = 'RUN_SETUP_check_stake2', object = Moveable()}},
 	}}
@@ -578,6 +576,7 @@ function G.UIDEF.stake_option(_type)
 	local stake_options = {}
 	local curr_options = {}
 	local deck_usage = G.PROFILES[G.SETTINGS.profile].deck_usage[G.GAME.viewed_back.effect.center.key]
+	G.viewed_stake = deck_usage and ((deck_usage.wins_by_key[SMODS.stake_from_index(G.viewed_stake)] or G.PROFILES[G.SETTINGS.profile].all_unlocked) and G.viewed_stake or (get_deck_win_stake(G.GAME.viewed_back.effect.center.key) + 1)) or 1
 	for i=1, #G.P_CENTER_POOLS.Stake do
 		if G.PROFILES[G.SETTINGS.profile].all_unlocked or SMODS.check_applied_stakes(G.P_CENTER_POOLS.Stake[i], deck_usage or {wins_by_key = {}}) then
 			stake_options[#stake_options + 1] = i
@@ -593,8 +592,8 @@ function G.UIDEF.stake_option(_type)
 end
 
 G.FUNCS.change_stake = function(args)
-	G.viewed_stake = args.to_val
-	G.PROFILES[G.SETTINGS.profile].MEMORY.stake = args.to_val
+	G.viewed_stake = args.to_val or args.to_key
+	G.PROFILES[G.SETTINGS.profile].MEMORY.stake = args.to_val or args.to_key
 end
 
 --#endregion
@@ -1615,17 +1614,6 @@ end
 
 function create_UIBox_current_hands(simple)
 	G.current_hands = {}
-	local index = 0
-	for _, v in ipairs(G.handlist) do
-		local ui_element = create_UIBox_current_hand_row(v, simple)
-		G.current_hands[index + 1] = ui_element
-		if ui_element then
-			index = index + 1
-		end
-		if index >= 10 then
-			break
-		end
-	end
 
 	local visible_hands = {}
 	for _, v in ipairs(G.handlist) do
@@ -1634,6 +1622,19 @@ function create_UIBox_current_hands(simple)
 		end
 	end
 
+	local index = 0
+	for _, v in ipairs(G.handlist) do
+		local ui_element = create_UIBox_current_hand_row(v, simple)
+		G.current_hands[index + 1] = ui_element
+		if ui_element then
+			index = index + 1
+		end
+		if index >= 10 and #visible_hands > 12 then -- keep pagination off until there's more than the vanilla max of 12 hands
+			break
+		end
+	end
+
+	
 	local hand_options = {}
 	for i = 1, math.ceil(#visible_hands / 10) do
 		table.insert(hand_options,
@@ -1643,7 +1644,8 @@ function create_UIBox_current_hands(simple)
 	local object = {n = G.UIT.ROOT, config = {align = "cm", colour = G.C.CLEAR}, nodes = {
 		{n = G.UIT.R, config = {align = "cm", padding = 0.04}, nodes =
 			G.current_hands},
-		{n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
+		-- UI consistency with vanilla 
+		#visible_hands > 12 and {n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
 			create_option_cycle({
 				options = hand_options,
 				w = 4.5,
@@ -1653,8 +1655,8 @@ function create_UIBox_current_hands(simple)
 				current_option = 1,
 				colour = G.C.RED,
 				no_pips = true
-			})}}}}
-			object = AKYRS.mod_run_info_hands(object)
+			})}} or nil,
+		}}
 
 	local t = {n = G.UIT.ROOT, config = {align = "cm", minw = 3, padding = 0.1, r = 0.1, colour = G.C.CLEAR}, nodes = {
 		{n = G.UIT.O, config = {
@@ -1754,7 +1756,6 @@ end
 function Card:set_sprites(_center, _front)
     if _front then
         local _atlas, _pos = get_front_spriteinfo(_front)
-        _atlas, _pos = AKYRS.sprite_info_override(_center, _front, self, _atlas, _pos)
         if self.children.front then self.children.front:remove() end
 		self.children.front = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, _atlas, _pos)
 		self.children.front.states.hover = self.states.hover
@@ -1790,7 +1791,7 @@ function Card:set_sprites(_center, _front)
 					G.j_undiscovered.pos
 				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas, pos)
 			elseif _center.set == 'Joker' or _center.consumeable or _center.set == 'Voucher' then
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set], self.config.center.pos)
+				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set], _center.pos or {x=0, y=0})
 			else
 				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center.atlas or 'centers'], _center.pos)
 			end
@@ -2265,11 +2266,9 @@ function get_pack(_key, _type)
 		local add
 		v.current_weight = v.get_weight and v:get_weight() or v.weight or 1
         if (not _type or _type == v.kind) then add = true end
-		if v.in_pool and type(v.in_pool) == 'function' then
-			local res, pool_opts = SMODS.add_to_pool(v)
-			pool_opts = pool_opts or {}
-			add = res and (add or pool_opts.override_base_checks)
-		end
+		local res, pool_opts = SMODS.add_to_pool(v)
+		pool_opts = pool_opts or {}
+		add = res and (add or pool_opts.override_base_checks)
 		if add and not G.GAME.banned_keys[v.key] then cume = cume + (v.current_weight or 1); temp_in_pool[v.key] = true end
     end
     local poll = pseudorandom(pseudoseed((_key or 'pack_generic')..G.GAME.round_resets.ante))*cume
@@ -2381,7 +2380,7 @@ function Blind:debuff_hand(cards, hand, handname, check)
         local flags = SMODS.trigger_effects(effects, cards[i])
 		if flags.add_to_hand then splashed = true end
 		if flags.remove_from_hand then unsplashed = true end
-        if splashed and not unsplashed then table.insert(final_scoring_hand, G.play.cards[i]) end
+        if splashed and not unsplashed then table.insert(final_scoring_hand, cards[i]) end
     end
 	local flags = SMODS.calculate_context({ debuff_hand = true, full_hand = cards, scoring_hand = final_scoring_hand, poker_hands = hand, scoring_name = handname, check = check })
 	if flags.prevent_debuff then return false end
@@ -2451,11 +2450,11 @@ function Card:use_consumeable(area, copier)
 end
 
 local ease_ante_ref = ease_ante
-function ease_ante(mod, ante_end)
-	local flags = SMODS.calculate_context({modify_ante = mod, ante_end = ante_end})
-	if flags.modify then mod = mod + flags.modify end
+function ease_ante(mod)
+	local flags = SMODS.calculate_context({modify_ante = mod, ante_end = SMODS.ante_end})
+	if flags.modify then mod = flags.modify end
 	ease_ante_ref(mod)
-	SMODS.calculate_context({ante_change = mod, ante_end = ante_end})
+	SMODS.calculate_context({ante_change = mod, ante_end = SMODS.ante_end})
 end
 
 local eval_card_ref = eval_card

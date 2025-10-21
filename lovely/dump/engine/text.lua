@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '5bfa60e3406cf984f9beb793a6a75795892eb500aa7ac3f92edfa68e0592fd5a'
+LOVELY_INTEGRITY = 'fc8754f159e5c1b8167bdd73e7f6dd775a717f963ee992d947a2f26e9844a3ae'
 
 --Class
 DynaText = Moveable:extend()
@@ -27,7 +27,6 @@ function DynaText:init(config)
     self.config.scroll_speed = self.config.scroll_speed or self.config.marquee and 0.1 or nil
 
     self.start_pop_in = self.config.pop_in
-    self.akyrs_stay_on_top = config.akyrs_stay_on_top
 
     config.W = 0
     config.H = 0
@@ -38,7 +37,6 @@ function DynaText:init(config)
     self:update_text(true)
     if self.config.maxw and self.config.W > self.config.maxw and not self.config.marquee then
         self.start_pop_in = self.config.pop_in
-        self.akyrs_stay_on_top = config.akyrs_stay_on_top
         self.scale = self.scale*(self.config.maxw/self.config.W)
         self:update_text(true)
     end
@@ -90,9 +88,6 @@ function DynaText:update_text(first_pass)
             local part_scale = 1
             if type(v) == 'table' and (v.ref_table or v.string) then
                 new_string = (v.prefix or '')..format_ui_value(v.ref_table and v.ref_table[v.ref_value] or v.string)..(v.suffix or '')
-                if self.config.akyrs_number_format then
-                    new_string = (v.prefix or '')..number_format(v.ref_table and v.ref_table[v.ref_value] or v.string, self.config.akyrs_number_format)..(v.suffix or '')
-                end
                 part_a = #(v.prefix or '')
                 part_b = #new_string - #(v.suffix or '')
                 if v.scale then part_scale = v.scale end
@@ -284,6 +279,9 @@ function DynaText:align_letters()
             end
         if self.config.float then letter.offset.y = (G.SETTINGS.reduced_motion and 0 or 1)*math.sqrt(self.scale)*(2+(self.font.FONTSCALE/G.TILESIZE)*2000*math.sin(2.666*G.TIMERS.REAL+200*k)) + 60*(letter.scale-1) end
         if self.config.bump then letter.offset.y = (G.SETTINGS.reduced_motion and 0 or 1)*self.bump_amount*math.sqrt(self.scale)*7*math.max(0, (5+self.bump_rate)*math.sin(self.bump_rate*G.TIMERS.REAL+200*k) - 3 - self.bump_rate) end
+        if self.config.text_effect and SMODS.DynaTextEffects[self.config.text_effect] and type(SMODS.DynaTextEffects[self.config.text_effect].func) == "function" then
+            SMODS.DynaTextEffects[self.config.text_effect].func(self, k, letter) -- k is index
+        end
     end
 end
 
@@ -310,6 +308,10 @@ if Big then
 	self.scale = to_number(self.scale)
 	if self.shadow_parallax then self.shadow_parallax.x = to_number(self.shadow_parallax.x) end
 end
+    if self.config.text_effect and SMODS.DynaTextEffects[self.config.text_effect] and type(SMODS.DynaTextEffects[self.config.text_effect].draw_override) == "function" then
+        SMODS.DynaTextEffects[self.config.text_effect].draw_override(self)
+        return
+    end
     if self.children.particle_effect then self.children.particle_effect:draw() end
     local start_index = 1
     local end_index = #self.strings[self.focused_string].letters
@@ -340,6 +342,9 @@ end
             	letter.offset.y = to_number(letter.offset.y)
             end
             local real_pop_in = self.config.min_cycle_time == 0 and 1 or letter.pop_in
+            if self.config.text_effect and SMODS.DynaTextEffects[self.config.text_effect] and type(SMODS.DynaTextEffects[self.config.text_effect].draw_shadow) == "function" then
+                SMODS.DynaTextEffects[self.config.text_effect].draw_shadow(self, k, letter) -- shadow
+            else
             love.graphics.draw(
                 letter.letter,
                 0.5*(letter.dims.x - letter.offset.x)*self.font.FONTSCALE/G.TILESIZE -self.shadow_parrallax.x*self.scale/(G.TILESIZE),
@@ -351,6 +356,7 @@ end
                 0.5*letter.dims.y/self.scale
             )
             love.graphics.translate(letter.dims.x*self.font.FONTSCALE/G.TILESIZE, 0)
+            end
         end
         love.graphics.pop()
     end
@@ -375,6 +381,9 @@ end
         local real_pop_in = self.config.min_cycle_time == 0 and 1 or letter.pop_in
         love.graphics.setColor(letter.prefix or letter.suffix or letter.colour or self.colours[k%#self.colours + 1])
 
+        if self.config.text_effect and SMODS.DynaTextEffects[self.config.text_effect] and type(SMODS.DynaTextEffects[self.config.text_effect].draw_letter) == "function" then
+            SMODS.DynaTextEffects[self.config.text_effect].draw_letter(self, k, letter, false) -- actual text
+        else
         love.graphics.draw(
             letter.letter,
             0.5*(letter.dims.x - letter.offset.x)*self.font.FONTSCALE/G.TILESIZE + _shadow_norm.x,
@@ -385,6 +394,7 @@ end
             0.5*letter.dims.x/(self.scale),
             0.5*letter.dims.y/(self.scale)
     )
+        end
         love.graphics.translate(letter.dims.x*self.font.FONTSCALE/G.TILESIZE, 0)
     end
     love.graphics.pop()

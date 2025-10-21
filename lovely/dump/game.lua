@@ -1,23 +1,7 @@
-LOVELY_INTEGRITY = '1bed2e9e536e7e4eb5bdf21ed3a5429aaebd3ebe9fe43403af0e2ff69d3c488b'
+LOVELY_INTEGRITY = '4196a8b282980562b4b956b51485315c09cac3d4a792a673ab6ee61e1f48e744'
 
 --Class
 Game = Object:extend()
-AKYRS_CROSSMOD = {}
-AKYRS_CROSSMOD.suit_to_atlas_map = {}
-AKYRS_CROSSMOD.rank_to_atlas_map = {}
-function akyrs_unpack_unordered_recursive(tbl, key)
-    local new_key, value = next(tbl, key)
-    if new_key == nil then return end
-
-    return value, akyrs_unpack_unordered_recursive(tbl, new_key)
-end
-
-function akyrs_unpack_unordered(tbl)
-    local key, value = next(tbl)
-    if key == nil then return end
-
-    return value, akyrs_unpack_unordered_recursive(tbl, key)
-end
 
 --Class Methods
 function Game:init()
@@ -230,19 +214,6 @@ function Game:start_up()
     initSteamodded()
 
     set_profile_progress()
-    assert(AKYRS,[[ 
-    
-    (X^X)
-    
-    Hey! If you're reading this message, that means Aikoyori's Shenanigans has crashed :<
-    
-    Update your **Steamodded** and **Lovely Injector** to latest stable version.
-    
-    P.S. If you report the crash to me and I see either of those being outdated you are going to be strapped on a rocket to Mars >:>
-    
-    ======================================================================================================================================================
-    ]])
-    AKYRS.aiko_mod_startup(self)
     Cartomancer.load_mod_file('internal/localization.lua', 'cartomancer.localization')
     boot_timer('prep stage', 'splash prep',1)
     self:splash_screen()
@@ -956,10 +927,6 @@ function Game:load_profile(_profile)
         deck_usage = {},
         deck_stakes = {},
         challenges_unlocked = nil,
-        akyrs_hc_challenge_progress = {
-                    completed = {},
-                    unlocked = {}
-                },
         challenge_progress = {
             completed = {},
             unlocked = {}
@@ -2167,7 +2134,6 @@ function Game:start_run(args)
     else ease_background_colour_blind(G.STATE, saveTable.BLIND.name:gsub("%s+", "") ~= '' and saveTable.BLIND.name or 'Small Blind') end
 
     local selected_back = saveTable and saveTable.BACK.name or (args.challenge and args.challenge.deck and args.challenge.deck.type) or (args.deck and args.deck.name) or (self.GAME.viewed_back and self.GAME.viewed_back.name) or self.GAME.selected_back and self.GAME.selected_back.name or 'Red Deck'
-    if args.challenge and args.challenge.akyrs_is_hardcore and not (args.challenge.deck and args.challenge.deck.type) then selected_back = 'Hardcore Challenge Deck' end
     selected_back = get_deck_from_name(selected_back)
     self.GAME = saveTable and saveTable.GAME or self:init_game_object()
     if Talisman and Talisman.igo then self.GAME = Talisman.igo(self.GAME) end
@@ -2229,13 +2195,6 @@ function Game:start_run(args)
                             local _joker = add_joker(v.id, v.edition, k ~= 1)
                             if v.eternal then _joker:set_eternal(true) end
                             if v.pinned then _joker.pinned = true end
-                            if v.akyrs_sigma then _joker.ability.akyrs_sigma = true end
-                            if v.akyrs_card_ability then 
-                                for i,k in pairs(v.akyrs_card_ability) do
-                                    _joker.ability[i] = k
-                                end
-                                if v.akyrs_sell_cost then _joker.sell_cost = v.akyrs_sell_cost end
-                            end
                             if v.rental then _joker:set_rental(true) end
                         return true
                         end
@@ -2612,13 +2571,10 @@ function Game:start_run(args)
             ((a.s or '')..(a.r or '')..(a.e or '')..(a.d or '')..(a.g or '')) < 
             ((b.s or '')..(b.r or '')..(b.e or '')..(b.d or '')..(b.g or '')) end)
 
-        card_protos = customDeckHooks(self,card_protos)
-        
         for k, v in ipairs(card_protos) do
             card_from_control(v)
         end
 
-        AKYRS.mod_playing_cards(self)
         self.GAME.starting_deck_size = #G.playing_cards
     end
 
@@ -2894,11 +2850,6 @@ function Game:update(dt)
 
         G.exp_times.max_vel = 70*move_dt
         
-        local __new_moveables = {}
-        for k, v in pairs(self.MOVEABLES) do
-            if not v.REMOVED then table.insert(__new_moveables, v) end
-        end
-        self.MOVEABLES = __new_moveables
         for k, v in pairs(self.MOVEABLES) do
             if v.FRAME.MOVE < G.FRAMES.MOVE then v:move(move_dt) end
         end
@@ -3042,14 +2993,12 @@ function Game:draw()
     end
 
     for k, v in pairs(self.I.MOVEABLE) do
-    if not v.akyrs_stay_on_top then
         if not v.parent then 
             love.graphics.push()
             v:translate_container()
             v:draw()
             love.graphics.pop()
         end
-    end
     end
 
     if G.KINO_SPLASH_LOGO then
@@ -3096,13 +3045,11 @@ function Game:draw()
         end
 
         for k, v in pairs(self.I.CARD) do
-            if not v.akyrs_stay_on_top then
             if (not v.parent and v ~= self.CONTROLLER.dragging.target and v ~= self.CONTROLLER.focused.target) then
                 love.graphics.push()
                 v:translate_container()
                 v:draw()
                 love.graphics.pop()
-            end
             end
         end
 
@@ -3152,14 +3099,6 @@ function Game:draw()
         end
     end
 
-    if (self.AKYRS_AIKOYORI and not self.AKYRS_AIKOYORI.REMOVED) then
-        love.graphics.push()
-        self.AKYRS_AIKOYORI:draw(dt)
-        self.akyrs_aiko_y = self.akyrs_aiko_y or 0
-        self.AKYRS_AIKOYORI.T.y = self.akyrs_aiko_y + G.WINDOWTRANS.real_window_h/(G.TILESCALE*G.TILESIZE)-self.AKYRS_AIKOYORI.T.h+0.1 + math.sin(G.TIMERS.REAL * 2.1) * 0.1
-        self.AKYRS_AIKOYORI.T.x = G.WINDOWTRANS.real_window_w/(G.TILESCALE*G.TILESIZE)-self.AKYRS_AIKOYORI.T.w+1
-        love.graphics.pop()
-    end
     if self.debug_tools then 
         if self.debug_tools ~= self.CONTROLLER.dragging.target then
             love.graphics.push()
@@ -3200,14 +3139,6 @@ function Game:draw()
         love.graphics.pop()
     end
 
-    for k, v in pairs(self.I.CARD) do
-        if (v.akyrs_stay_on_top) then -- PATCHED BY AIKOYORI :D
-            love.graphics.push()
-            v:translate_container()
-            v:draw()
-            love.graphics.pop()
-        end
-    end
     if self.achievement_notification then 
         love.graphics.push()
             self.achievement_notification:translate_container()
@@ -3216,16 +3147,6 @@ function Game:draw()
     end
 
 
-    for k, v in pairs(self.I.MOVEABLE) do
-        if v.akyrs_stay_on_top then
-            if not v.parent or not v.parent.akyrs_stay_on_top then
-                love.graphics.push()
-                v:translate_container()
-                v:draw()
-                love.graphics.pop()
-            end
-        end
-    end
     if self.screenwipe then
         love.graphics.push()
             self.screenwipe:translate_container()
@@ -3262,9 +3183,7 @@ love.graphics.pop()
         G.SHADERS['CRT']:send('mouse_screen_pos', G.video_control and {love.graphics.getWidth( )/2, love.graphics.getHeight( )/2} or {G.ARGS.eased_cursor_pos.sx, G.ARGS.eased_cursor_pos.sy})
         G.SHADERS['CRT']:send('screen_scale', G.TILESCALE*G.TILESIZE)
         G.SHADERS['CRT']:send('hovering', 1)
-        if AKYRS.config.turn_on_crt then
         love.graphics.setShader( G.SHADERS['CRT'])
-        end
         G.SETTINGS.GRAPHICS.crt = G.SETTINGS.GRAPHICS.crt/0.3
     end
 
@@ -3301,7 +3220,6 @@ love.graphics.pop()
             end
         end
 
-        if AKYRS.debug then love.graphics.print("Garbage Count: "..collectgarbage("count"), 10, 80) end
         if G.check and G.SETTINGS.perf_mode then
             local section_h = 30
             local resolution = 60*section_h
@@ -3561,26 +3479,10 @@ G.GAME.blind.chips = (G.GAME.blind.chips or math.huge)
         G.E_MANAGER:add_event(Event({
             trigger = 'immediate',
             func = function()
-        if not G.GAME.akyrs_mathematics_enabled and not G.GAME.current_round.advanced_blind then
         if to_big(G.GAME.chips) >= to_big(G.GAME.blind.chips) or G.GAME.current_round.hands_left < 1 then
             G.STATE = G.STATES.NEW_ROUND
-
         else
             G.STATE = G.STATES.DRAW_TO_HAND
-        end
-        end
-        if G.GAME.current_round.advanced_blind and G.GAME.aiko_puzzle_win or G.GAME.current_round.hands_left < 1 then
-            if G.GAME.aiko_puzzle_win or G.GAME.current_round.hands_left < 1 then
-                G.STATE = G.STATES.NEW_ROUND
-            else
-                G.STATE = G.STATES.DRAW_TO_HAND
-            end
-        elseif G.GAME.akyrs_mathematics_enabled and G.GAME.akyrs_character_stickers_enabled then
-            if (G.GAME.blind and AKYRS.is_value_within_threshold(G.GAME.blind.chips,G.GAME.chips,G.GAME.akyrs_math_threshold)) or G.GAME.current_round.hands_left < 1 or AKYRS.does_hand_only_contain_symbols(G.hand) then
-                G.STATE = G.STATES.NEW_ROUND
-            else
-                G.STATE = G.STATES.DRAW_TO_HAND
-            end
         end
         G.STATE_COMPLETE = false
         return true

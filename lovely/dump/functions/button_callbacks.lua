@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '7265b08c01b82a603144744fa0597d870dcaaf80b5861022527d5912756db348'
+LOVELY_INTEGRITY = '1a960160674de863f068864e1d4dc9db5f7f7d49a35386fe8d1190d9f737ea37'
 
 --Moves the tutorial to the next step in queue
 --
@@ -470,7 +470,7 @@ end
 function G.FUNCS.toggle_button(e)
   e.config.ref_table.ref_table[e.config.ref_table.ref_value] = not e.config.ref_table.ref_table[e.config.ref_table.ref_value]
   if e.config.toggle_callback then 
-        e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value], e) -- patched by aikyoori lmaooo
+    e.config.toggle_callback(e.config.ref_table.ref_table[e.config.ref_table.ref_value])
   end
 end
 
@@ -2136,7 +2136,7 @@ end
 
   G.FUNCS.can_select_card = function(e)
     local card = e.config.ref_table
-    local card_limit = card.ability.card_limit
+    local card_limit = card.ability.card_limit - card.ability.extra_slots_used
     if card.ability.set ~= 'Joker' or #G.jokers.cards < G.jokers.config.card_limit + card_limit then
         e.config.colour = G.C.GREEN
         e.config.button = 'use_card'
@@ -2215,15 +2215,22 @@ end
       G.STATES.PLAY_TAROT
       
     G.CONTROLLER.locks.use = true
-    if G.booster_pack and not G.booster_pack.alignment.offset.py and (card.ability.consumeable or not (G.GAME.pack_choices and G.GAME.pack_choices > 1)) then
+    local nc
+    local select_to = card.area == G.pack_cards and G.pack_cards and booster_obj and SMODS.card_select_area(card, booster_obj) and card:selectable_from_pack(booster_obj)
+    if card.ability.consumeable and not select_to then
+        local obj = card.config.center
+        if obj.keep_on_use and type(obj.keep_on_use) == 'function' then
+            nc = obj:keep_on_use(card)
+        end
+    end
+    if G.booster_pack and not G.booster_pack.alignment.offset.py and ((not select_to and card.ability.consumeable) or not (G.GAME.pack_choices and G.GAME.pack_choices > 1)) then
+    
       G.booster_pack.alignment.offset.py = G.booster_pack.alignment.offset.y
       G.booster_pack.alignment.offset.y = G.ROOM.T.y + 29
     end
     if G.shop and not G.shop.alignment.offset.py then
       G.shop.alignment.offset.py = G.shop.alignment.offset.y
-      if G.shop then
       G.shop.alignment.offset.y = G.ROOM.T.y + 29
-      end
     end
     if G.blind_select and not G.blind_select.alignment.offset.py then
       G.blind_select.alignment.offset.py = G.blind_select.alignment.offset.y
@@ -2238,14 +2245,6 @@ end
     if card.children.sell_button then card.children.sell_button:remove(); card.children.sell_button = nil end
     if card.children.price then card.children.price:remove(); card.children.price = nil end
 
-    local nc
-    local select_to = card.area == G.pack_cards and booster_obj and booster_obj.select_card and card:selectable_from_pack(booster_obj)
-    if card.ability.consumeable and not select_to then
-        local obj = card.config.center
-        if obj.keep_on_use and type(obj.keep_on_use) == 'function' then
-            nc = obj:keep_on_use(card)
-        end
-    end
     if not card.from_area then card.from_area = card.area end
     if card.area and (not nc or card.area == G.pack_cards) then card.area:remove_card(card) end
     
@@ -2552,9 +2551,7 @@ end
       G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
         func = function()
-          if G.shop then
           G.shop.alignment.offset.y = G.ROOM.T.y + 29
-          end
           G.SHOP_SIGN.alignment.offset.y = -15
           return true
         end
@@ -3008,11 +3005,7 @@ G.FUNCS.cash_out = function(e)
               if not G.GAME.modifiers.carryover_hands then
                   G.GAME.current_round.hands_left = (math.max(1, G.GAME.round_resets.hands + G.GAME.round_bonus.next_hands))
               end
-              if G.GAME.akyrs_always_skip_shops then
-                  G.STATE = G.STATES.BLIND_SELECT
-              else
               G.STATE = G.STATES.SHOP
-              end
               G.GAME.shop_free = nil
               G.GAME.shop_d6ed = nil
               G.STATE_COMPLETE = false

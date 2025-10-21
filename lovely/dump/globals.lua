@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '591fb7493d3f4377529037163ed541a6ff9074b557a7d72583e7bee7252384a4'
+LOVELY_INTEGRITY = '6d4e0cfc6072c0111aaa255b2b4cb0a4533fed37d792a4a0a53a1742b4a2a076'
 
 VERSION = '1.0.1o'
 VERSION = VERSION..'-FULL'
@@ -383,22 +383,6 @@ function Game:set_globals()
         ETERNAL = HEX('c75985'),
         PERISHABLE = HEX('4f5da1'),
         RENTAL = HEX('b18f43'),
-        AKYRS_PLAYABLE = HEX("ee36ff"),
-        AKYRS_PISSANDSHITTIUM = HEX("68211d"),
-        AKYRS_BOCCHI = HEX("ff61d2"),
-        AKYRS_KITA = HEX("ff294d"),
-        AKYRS_NIJIKA = HEX("e38e20"),
-        AKYRS_RYOU = HEX("3653f7"),
-        AKYRS_UMBRAL_P = HEX("925ac3"),
-        AKYRS_UMBRAL_Y = HEX("ffd45b"),
-        AKYRS_AIKOYORI_HAIR = HEX("8dffa8"),
-        AKYRS_AIKOYORI_BOW = HEX("ff5979"),
-        AKYRS_AIKOYORI_BOW_SHADE = HEX("d53e99"),
-        AKYRS_AIKOYORI_BG = HEX("533B4077"),
-        AKYRS_HAIR_DARK = HEX("244748"),
-        AKYRS_HAIR_DARKER = HEX("1c363d"),
-        AKYRS_AIKOYORI_SHIRT = HEX("ffffff"),
-        AKYRS_AIKOYORI_CARDIGAN = HEX("a06d4d"),
         DYN_UI = {
             MAIN = HEX('374244'),
             DARK = HEX('374244'),

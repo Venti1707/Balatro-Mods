@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '9ae1abfdae62d1e6b9c32dabf076f3468b91fb0c58a04c8c772bd8738908550a'
+LOVELY_INTEGRITY = '5f42b8f3adbff96051b7ed7dcdc4ce4b660756cd7190eb9f953280fe22fcb72a'
 
 ---@class Node
 Node = Object:extend()
@@ -118,7 +118,7 @@ function Node:draw_boundingrect()
         end
         if self.CALCING then 
             love.graphics.setColor({0,0,1,1}) 
-                        love.graphics.setLineWidth(1)
+            love.graphics.setLineWidth(3)
         end
         love.graphics.rectangle('line', 0, 0, transform.w*G.TILESIZE,transform.h*G.TILESIZE, 3)
         love.graphics.pop() 
@@ -267,7 +267,6 @@ end
 
 --If the current container is being 'Hovered', usually by a cursor, determine if any hover popups need to be generated and do so
 function Node:hover() 
-    if not AKYRS.should_hide_ui() then
     if self.config and self.config.h_popup then
         if not self.children.h_popup then 
             self.config.h_popup_config.instance_type = 'POPUP'
@@ -277,8 +276,12 @@ function Node:hover()
             }
             self.children.h_popup.states.collide.can = false
             self.children.h_popup.states.drag.can = true
+            -- Fixes styled info_queue names
+            -- This ensures show_infotip runs just after the main hover box is created instead of being able to fall one frame after
+            if ((self.children.h_popup.UIRoot.children[1] or {}).config or {}).func == "show_infotip" then
+              G.FUNCS.show_infotip(self.children.h_popup.UIRoot.children[1])
+            end
         end
-    end
     end
 end
 

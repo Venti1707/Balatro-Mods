@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '4c848e3c148c09a03fbe81fe799e54d198d0353447ce3101ccee6d946d741269'
+LOVELY_INTEGRITY = '2f6ce3757c7f572e2051662af82c749e84006be20663b651d401ea26b07b9771'
 
 --Create a global UIDEF that contains all UI definition functions\
 --As a rule, these contain functions that return a table T representing the definition for a UIBox
@@ -213,7 +213,6 @@ function create_UIBox_notify_alert(_achievement, _type)
     'ERROR'
 
   if _achievement == 'b_challenge' then subtext = localize('k_challenges') end
-    if _achievement == 'b_akyrs_hardcore_challenges' then subtext = localize('b_akyrs_hc_challenges_full_txt') end
   local name = _type == 'achievement' and localize(_achievement, 'achievement_names') or 'ERROR'
 
     local t = {n=G.UIT.ROOT, config = {align = 'cl', r = 0.1, padding = 0.06, colour = G.C.UI.TRANSPARENT_DARK}, nodes={
@@ -309,11 +308,12 @@ function G.UIDEF.use_and_sell_buttons(card)
       }},
     }}
   end
-  if card.ability.consumeable and card.area == G.pack_cards and booster_obj and booster_obj.select_card and card:selectable_from_pack(booster_obj) then
+  if card.ability.consumeable and card.area == G.pack_cards and G.pack_cards and booster_obj and SMODS.card_select_area(card, booster_obj) and card:selectable_from_pack(booster_obj) then
       if (card.area == G.pack_cards and G.pack_cards) then
+          local select_button_text = SMODS.get_select_text(card, booster_obj) or localize('b_select')
           return {n=G.UIT.ROOT, config = {padding = 0, colour = G.C.CLEAR}, nodes={
                   {n=G.UIT.R, config={ref_table = card, r = 0.08, padding = 0.1, align = "bm", minw = 0.5*card.T.w - 0.15, maxw = 0.9*card.T.w - 0.15, minh = 0.3*card.T.h, hover = true, shadow = true, colour = G.C.UI.BACKGROUND_INACTIVE, one_press = true, button = 'use_card', func = 'can_select_from_booster'}, nodes={
-                  {n=G.UIT.T, config={text = localize('b_select'),colour = G.C.UI.TEXT_LIGHT, scale = 0.45, shadow = true}}
+                  {n=G.UIT.T, config={text = select_button_text, colour = G.C.UI.TEXT_LIGHT, scale = 0.45, shadow = true}}
                   }},
               }}
       end
@@ -992,7 +992,6 @@ end
               }}, 
             config = args.uibox_config
           }
-          args.AT.definition.nodes[1].config.object.akyrs_stay_on_top = args.akyrs_stay_on_top
           args.AT.attention_text = true
 
           args.text = args.AT.UIRoot.children[1].config.object
@@ -1023,7 +1022,6 @@ end
               lifespan = 5,
               speed = 0,
               attach = args.AT,
-              akyrs_stay_on_top = args.akyrs_stay_on_top,
               colours = {args.backdrop_colour}
             })
           end
@@ -1127,21 +1125,11 @@ end
   end
 
   function info_tip_from_rows(desc_nodes, name)
-    local name_nodes = {}
-    local function deep_find(t, index)
-      if t[index] then return true end
-      for i,v in pairs(t) do
-        if i == index then return true end
-        if type(v) == "table" then
-          return deep_find(v, index)
-        end
-      end
-      return false
-    end
-    if not desc_nodes.loc_name or not deep_find(desc_nodes.loc_name, "object") then
+    local name_nodes
+    if not desc_nodes.name_styled then
       name_nodes = {{n=G.UIT.T, config={text = name, scale = 0.32, colour = G.C.UI.TEXT_LIGHT}}}
     else
-      name_nodes = {desc_nodes.loc_name}
+      name_nodes = {desc_nodes.name_styled}
     end
     local t = {}
     for k, v in ipairs(desc_nodes) do
@@ -1188,7 +1176,6 @@ end
           {0, 1, 1, 1}
 
       local outer_padding = 0.05
-      if not AUT.card_type then return nil end
       local card_type = localize('k_'..string.lower(AUT.card_type))
 
       if AUT.card_type == 'Joker' or (AUT.badges and AUT.badges.force_rarity) then card_type = SMODS.Rarity:get_rarity_badge(card.config.center.rarity) end
@@ -1207,11 +1194,6 @@ end
       end
 
       local obj = card.config.center
-      local multi_boxes = {}
-      local info_cols = {}
-      if obj and AKYRS.should_conceal_card(card, obj) then
-      
-      else
       if AUT.badges.card_type or AUT.badges.force_rarity then
           if obj and (obj.set_card_type_badge or obj.type and obj.type.set_card_type_badge) then
               if obj.type and type(obj.type.set_card_type_badge) == 'function' then
@@ -1248,9 +1230,7 @@ end
           badges.mod_set = nil
       end
       AUT.main.background_colour = AUT.main.background_colour or AUT.box_colours and AUT.box_colours[1] or nil
-      if not multi_boxes then
       local multi_boxes = {}
-      end
       if AUT.multi_box then
           for i, box in ipairs(AUT.multi_box) do
               box.background_colour = box.background_colour or AUT.box_colours and AUT.box_colours[i+1] or nil
@@ -1279,9 +1259,7 @@ end
           cols = 4
       end
       local nodes_per_col = math.ceil(#info_boxes/cols)
-      if not info_cols then
       local info_cols = {}
-      end
       for i = 0, cols-1 do
           local col = {}
           for j = 1, nodes_per_col do
@@ -1292,7 +1270,6 @@ end
           end
           table.insert(info_cols, {n=G.UIT.C, config = {align="cm"}, nodes = col})
       end
-          end
       info_boxes = {{n=G.UIT.R, config = {align="cm", padding = 0.05, card_pos = card.T.x, credit = AUT.mod_credit and true or nil }, nodes = info_cols}}
       local ret_val = {n=G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR}, nodes={
           {n=G.UIT.C, config={align = "cm", func = 'show_infotip',object = Moveable(),ref_table = next(info_boxes) and info_boxes or nil}, nodes={
@@ -1788,15 +1765,9 @@ function create_UIBox_blind_choice(type, run_info)
 
 
   if type == 'Small' then
-    if not G.GAME.akyrs_no_skips then
     extras = create_UIBox_blind_tag(type, run_info)
-        extras = AKYRS.mod_skip_box(type, run_info, extras)
-    end
   elseif type == 'Big' then
-    if not G.GAME.akyrs_no_skips then
     extras = create_UIBox_blind_tag(type, run_info)
-        extras = AKYRS.mod_skip_box(type, run_info, extras)
-    end
   elseif not run_info then
     local dt1 = DynaText({string = {{string = localize('ph_up_ante_1'), colour = G.C.FILTER}}, colours = {G.C.BLACK}, scale = 0.55, silent = true, pop_delay = 4.5, shadow = true, bump = true, maxw = 3})
     local dt2 = DynaText({string = {{string = localize('ph_up_ante_2'), colour = G.C.WHITE}},colours = {G.C.CHANCE}, scale = 0.35, silent = true, pop_delay = 4.5, shadow = true, maxw = 3})
@@ -1832,7 +1803,6 @@ function create_UIBox_blind_choice(type, run_info)
   local text_table = loc_target
   local blind_col = get_blind_main_colour(type)
   local blind_amt = get_blind_amount(G.GAME.round_resets.blind_ante)*blind_choice.config.mult*G.GAME.starting_params.ante_scaling
-  blind_amt = AKYRS.mod_blind_requirement(blind_choice.config,blind_amt)
 
   local blind_state = G.GAME.round_resets.blind_states[type]
   local _reward = true
@@ -1853,7 +1823,6 @@ function create_UIBox_blind_choice(type, run_info)
     }}
   end
   end
-  AKYRS.add_blind_extra_info(blind_choice.config,blind_desc_nodes,{text_size = 0.25, difficulty_text_size = 0.3,border_size = 0.75})
   local run_info_colour = run_info and (blind_state == 'Defeated' and G.C.GREY or blind_state == 'Skipped' and G.C.BLUE or blind_state == 'Upcoming' and G.C.ORANGE or blind_state == 'Current' and G.C.RED or G.C.GOLD)
   local t = 
   {n=G.UIT.R, config={id = type, align = "tm", func = 'blind_choice_handler', minh = not run_info and 10 or nil, ref_table = {deck = nil, run_info = run_info}, r = 0.1, padding = 0.05}, nodes={
@@ -2863,7 +2832,6 @@ function create_UIBox_customize_deck()
 
   local index = 1
   for i, suit in ipairs(SMODS.Suit:obj_list(true)) do
-    if not suit.akyrs_hidden then
     if G.COLLABS.options[suit.key] then
         suitTabs[index] = {
                     label = localize(suit.key, 'suits_plural'),
@@ -2871,7 +2839,6 @@ function create_UIBox_customize_deck()
                     tab_definition_function_args = suit.key
                 }
         index = index + 1
-    end
     end
   end
 
@@ -3389,17 +3356,6 @@ function create_UIBox_round_scores_row(score, text_colour)
         {n=G.UIT.O, config={object = blind_choice.animation}}
       }},
     }
-        if AKYRS.getGameOverBlindText() then
-            score_tab = {
-              {n=G.UIT.R, config={align = "cm", minh = 0.6}, nodes={
-                {n=G.UIT.O, config={object = DynaText({string = {{string = AKYRS.getGameOverBlindText()}}, colours = {G.C.WHITE},shadow = true, float = true,maxw = 2.2, scale = 0.45})}}
-              }},
-              {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
-                {n=G.UIT.O, config={object = blind_choice.animation}}
-              }},
-            }
-        
-        end
   end
 
   local label_scale = 0.5
@@ -3454,8 +3410,6 @@ function create_UIBox_hand_tip(handname)
       if v[2] then card:juice_up(0.3, 0.2) end
       if k == 1 then play_sound('paper1',0.95 + math.random()*0.1, 0.3) end
       ease_value(card.T, 'scale',v[2] and 0.25 or -0.15,nil,'REAL',true,0.2)
-      if v['akyrs_letter'] then card:set_letters(v['akyrs_letter']) card.ability.forced_letter_render = true end
-      if v.is_null then card.is_null = true end
       cardarea:emplace(card)
   end
 
@@ -4687,29 +4641,12 @@ function create_UIBox_blind_popup(blind, discovered, vars)
     end
     local stake_sprite = get_stake_sprite(G.GAME.stake or 1, 0.4)
     blind_text[#blind_text + 1] =
-    AKYRS.getBlindText(blind.key, true)[1] and
-    {n=G.UIT.R, config={align = "cm", emboss = 0.05, r = 0.1, minw = 2.5, padding = 0.07, colour = G.C.WHITE}, nodes={
-        {n=G.UIT.R, config={align = "cm", maxw = 2.4}, nodes={
-            {n=G.UIT.T, config={text = AKYRS.getBlindText(blind.key, true)[1], scale = 0.35, colour = G.C.UI.TEXT_DARK}},
-        }},
-    {n=G.UIT.R, config={align = "cm"}, nodes={
-        {n=G.UIT.O, config={object = stake_sprite}},
-        AKYRS.mod_blind_display(blind) or
-        {n=G.UIT.T, config={text = AKYRS.getBlindText(blind.key, true)[2], scale = 0.4, colour = G.C.RED}},
-    }},
-    {n=G.UIT.R, config={align = "cm"}, nodes={
-        {n=G.UIT.T, config={text = localize('ph_blind_reward'), scale = 0.35, colour = G.C.UI.TEXT_DARK}},
-        {n=G.UIT.O, config={object = DynaText({string = {_dollars and string.rep(localize('$'),_dollars) or '-'}, colours = {G.C.MONEY}, rotate = true, bump = true, silent = true, scale = 0.45})}},
-    }},
-    ability_text[1] and {n=G.UIT.R, config={align = "cm", padding = 0.08, colour = mix_colours(blind.boss_colour, G.C.GREY, 0.4), r = 0.1, emboss = 0.05, minw = 2.5, minh = 0.9}, nodes=ability_text} or nil
-    }} or 
       {n=G.UIT.R, config={align = "cm", emboss = 0.05, r = 0.1, minw = 2.5, padding = 0.07, colour = G.C.WHITE}, nodes={
         {n=G.UIT.R, config={align = "cm", maxw = 2.4}, nodes={
           {n=G.UIT.T, config={text = localize('ph_blind_score_at_least'), scale = 0.35, colour = G.C.UI.TEXT_DARK}},
         }},
         {n=G.UIT.R, config={align = "cm"}, nodes={
           {n=G.UIT.O, config={object = stake_sprite}},
-          AKYRS.mod_blind_display(blind) or
           {n=G.UIT.T, config={text = blind.mult..localize('k_x_base'), scale = 0.4, colour = G.C.RED}},
         }},
         {n=G.UIT.R, config={align = "cm"}, nodes={
@@ -4718,7 +4655,6 @@ function create_UIBox_blind_popup(blind, discovered, vars)
         }},
         ability_text[1] and {n=G.UIT.R, config={align = "cm", padding = 0.08, colour = mix_colours(blind.boss_colour, G.C.GREY, 0.4), r = 0.1, emboss = 0.05, minw = 2.5, minh = 0.9}, nodes=ability_text} or nil
       }}
-        AKYRS.add_blind_extra_info(blind,ability_text,{text_size = 0.25, difficulty_text_size = 0.3, full_ui = true, info_queue = info_queue})
   else
     blind_text[#blind_text + 1] =
       {n=G.UIT.R, config={align = "cm", emboss = 0.05, r = 0.1, minw = 2.5, padding = 0.1, colour = G.C.WHITE}, nodes={
@@ -5846,7 +5782,13 @@ function G.UIDEF.challenges(from_game_over)
     end
   end
 
-  local _ch_tab = {comp = _ch_comp, unlocked = G.PROFILES[G.SETTINGS.profile].challenges_unlocked}
+  local unlock_count = 0
+  for k, v in ipairs(G.CHALLENGES) do
+      if SMODS.challenge_is_unlocked(v, k) then
+          unlock_count = unlock_count + 1
+      end
+  end
+  local _ch_tab = {comp = _ch_comp, unlocked = unlock_count}
 
   return {n=G.UIT.ROOT, config={align = "cm", padding = 0.1, colour = G.C.CLEAR, minh = 8, minw = 7}, nodes={
     {n=G.UIT.R, config={align = "cm", padding = 0.1, r = 0.1 ,colour = G.C.BLACK}, nodes={
@@ -5938,18 +5880,8 @@ function G.UIDEF.run_setup(from_game_over)
               label = localize('b_challenges'),
               tab_definition_function = G.UIDEF.challenges,
               tab_definition_function_args = from_game_over,
-                          } or {
-                            label = localize('b_akyrs_hc_challenges'),
-                            tab_definition_function = AKYRS.UIDEF.hc_challenges,
-                            tab_definition_function_args = from_game_over,
-                            chosen = _challenge_chosen
-                          },
-                          G.STAGE == G.STAGES.MAIN_MENU and {
-                            label = localize('b_akyrs_hc_challenges'),
-                            tab_definition_function = AKYRS.UIDEF.hc_challenges,
-                            tab_definition_function_args = from_game_over,
-                            chosen = _challenge_chosen
-                          } or nil,
+              chosen = _challenge_chosen
+            } or nil,
         },
         snap_to_nav = true}),
       }},
@@ -6167,14 +6099,7 @@ function G.UIDEF.challenge_list_page(_page)
     if k > G.CHALLENGE_PAGE_SIZE*(_page or 0) and k <= G.CHALLENGE_PAGE_SIZE*((_page or 0) + 1) then
       if G.CONTROLLER.focused.target and G.CONTROLLER.focused.target.config.id == 'challenge_page' then snapped = true end
       local challenge_completed =  G.PROFILES[G.SETTINGS.profile].challenge_progress.completed[v.id or '']
-      local challenge_unlocked = G.PROFILES[G.SETTINGS.profile].challenges_unlocked and (G.PROFILES[G.SETTINGS.profile].challenges_unlocked >= k)
-      if v.unlocked and type(v.unlocked) == 'function' then
-      	challenge_unlocked = v:unlocked()
-      elseif type(v.unlocked) == 'boolean' then
-          challenge_unlocked = v.unlocked
-      end
-      challenge_unlocked = challenge_unlocked or G.PROFILES[G.SETTINGS.profile].all_unlocked
-      
+      local challenge_unlocked = SMODS.challenge_is_unlocked(v, k)
 
       challenge_list[#challenge_list+1] = 
       {n=G.UIT.R, config={align = "cm"}, nodes={
@@ -6195,16 +6120,10 @@ function G.UIDEF.challenge_list_page(_page)
   return {n=G.UIT.ROOT, config={align = "cm", padding = 0.1, colour = G.C.CLEAR}, nodes=challenge_list}
 end
 
-function G.UIDEF.challenge_description(_id, daily, is_row, is_hardcore)
+function G.UIDEF.challenge_description(_id, daily, is_row)
   local challenge = G.CHALLENGES[_id]
-  if is_hardcore then challenge = AKYRS.HC_CHALLENGES[_id] end
-  if challenge and challenge.difficulty then AKYRS.current_hc_difficulty = challenge.difficulty else AKYRS.current_hc_difficulty = nil end
   if not challenge then return {n=G.UIT.ROOT, config={align = "cm", colour = G.C.BLACK, minh = 8.82, minw = 11.5, r = 0.1}, nodes={{n=G.UIT.T, config={text = localize('ph_select_challenge'), scale = 0.3, colour = G.C.UI.TEXT_LIGHT}}}} end
 
-  local stake = 1
-  if challenge.stake then stake = challenge.stake end
-  local stake = 1
-  if challenge.stake then stake = challenge.stake end
   local joker_size = 0.6
   local jokers = CardArea(0,0,
       10*joker_size,
@@ -6218,13 +6137,6 @@ function G.UIDEF.challenge_description(_id, daily, is_row, is_hardcore)
       if v.edition then card:set_edition({[v.edition] = true}, true, true) end
       if v.eternal then card:set_eternal(true) end
       if v.pinned then card.pinned = true end
-      if v.akyrs_sigma then card.ability.akyrs_sigma = true end
-      if v.akyrs_card_ability then 
-          for i,k in pairs(v.akyrs_card_ability) do
-              card.ability[i] = k
-          end
-          if v.akyrs_sell_cost then card.sell_cost = v.akyrs_sell_cost end
-      end
       if v.rental then card:set_rental(true) end
       jokers:emplace(card)
     end
@@ -6294,17 +6206,17 @@ function G.UIDEF.challenge_description(_id, daily, is_row, is_hardcore)
                 label = localize('b_rules'),
                 chosen = true,
                 tab_definition_function = G.UIDEF.challenge_description_tab,
-                                tab_definition_function_args = {_id = _id, _tab = 'Rules', _hc = is_hardcore}
+                tab_definition_function_args = {_id = _id, _tab = 'Rules'}
             },
             {
                 label = localize('b_restrictions'),
                 tab_definition_function = G.UIDEF.challenge_description_tab,
-                                tab_definition_function_args = {_id = _id, _tab = 'Restrictions', _hc = is_hardcore}
+                tab_definition_function_args = {_id = _id, _tab = 'Restrictions'}
             },
             {
                 label = localize('b_deck'),
                 tab_definition_function = G.UIDEF.challenge_description_tab,
-                                tab_definition_function_args = {_id = _id, _tab = 'Deck', _hc = is_hardcore}
+                tab_definition_function_args = {_id = _id, _tab = 'Deck'}
             }
         },
         tab_h = 5,
@@ -6315,7 +6227,7 @@ function G.UIDEF.challenge_description(_id, daily, is_row, is_hardcore)
         no_loop = true}
     )}},
     not is_row and {n=G.UIT.R, config={align = "cm", minh = 0.9}, nodes={
-            {n=G.UIT.R, config={align = "cm", padding = 0.1, minh = 0.7, minw = 9, r = 0.1, hover = true, colour = G.C.BLUE, button = is_hardcore and "akys_start_hc_challenge_run" or "start_challenge_run", shadow = true, id = _id, stake = stake}, nodes={
+      {n=G.UIT.R, config={align = "cm", padding = 0.1, minh = 0.7, minw = 9, r = 0.1, hover = true, colour = G.C.BLUE, button = "start_challenge_run", shadow = true, id = _id}, nodes={
         {n=G.UIT.T, config={text = localize('b_play_cap'), scale = 0.5, colour = G.C.UI.TEXT_LIGHT,func = 'set_button_pip', focus_args = {button = 'x',set_button_pip = true}}}
       }}
     }} or nil,
@@ -6326,7 +6238,6 @@ function G.UIDEF.challenge_description_tab(args)
   args = args or {}
   if args._tab == 'Rules' then
     local challenge = G.CHALLENGES[args._id]
-    if args._hc then challenge = AKYRS.HC_CHALLENGES[args._id] end
     local start_rules = {}
     local modded_starts = nil
     local game_rules = {}
@@ -6355,26 +6266,6 @@ function G.UIDEF.challenge_description_tab(args)
     nu_base_modifiers[#nu_base_modifiers+1] = v
   end
   table.sort(nu_base_modifiers, function(a,b) return a.order < b.order end)
-  if challenge.stake and challenge.stake ~= 1 and AKYRS.find_stake_from_level(challenge.stake) then
-      modded_starts = modded_starts or {}
-      local stake_key, stake_obj = AKYRS.find_stake_from_level(challenge.stake)
-      modded_starts[#modded_starts + 1] = {
-          n = G.UIT.R,
-          config = { align = "cl", maxw = 3.5 },
-          nodes =
-          {
-              {
-                  n = G.UIT.T,
-                  config = {
-                      text = localize { type = 'name_text', set = 'Stake', key = stake_key },
-                      colour = get_stake_col(SMODS.Stakes[stake_key].order),
-                      scale = 0.4
-                  }
-              }
-          }
-      }
-  end
-  
   for k, v in ipairs(nu_base_modifiers) do
     if v.old_val then
       modded_starts = modded_starts or {}
@@ -6396,11 +6287,7 @@ function G.UIDEF.challenge_description_tab(args)
     if challenge.rules then
       if challenge.rules.custom then
         for k, v in ipairs(challenge.rules.custom) do
-          if v.akyrs_localized_value then
-              game_rules[#game_rules+1] = {n=G.UIT.R, config={align = "cl"}, nodes= localize{type = 'text', key = 'ch_c_'..v.id, vars = {localize(v.akyrs_localized_value)}}}
-          else
           game_rules[#game_rules+1] = {n=G.UIT.R, config={align = "cl"}, nodes= localize{type = 'text', key = 'ch_c_'..v.id, vars = {v.value}}}
-          end
         end  
       end
     end
@@ -6428,7 +6315,6 @@ function G.UIDEF.challenge_description_tab(args)
     }}
   elseif args._tab == 'Restrictions' then
     local challenge = G.CHALLENGES[args._id]
-    if args._hc then challenge = AKYRS.HC_CHALLENGES[args._id] end
 
     local banned_cards, banned_tags, banned_other = {}, {}, {}
 
@@ -6561,7 +6447,6 @@ function G.UIDEF.challenge_description_tab(args)
     }}
   elseif args._tab == 'Deck' then
     local challenge = G.CHALLENGES[args._id]
-    if args._hc then challenge = AKYRS.HC_CHALLENGES[args._id] end
     local deck_tables = {}
     local SUITS = {}
     local suit_map = {}
@@ -7086,7 +6971,6 @@ function UIBox_button(args)
   if args.minw < args.maxw then args.maxw = args.minw - 0.2 end
   args.minh = args.minh or 0.9
   args.scale = args.scale or 0.5
-  args.akyrs_extras = args.akyrs_extras or nil
   args.focus_args = args.focus_args or nil
   args.text_colour = args.text_colour or G.C.UI.TEXT_LIGHT
   local but_UIT = args.col == true and G.UIT.C or G.UIT.R
@@ -7126,7 +7010,6 @@ function UIBox_button(args)
       r = 0.1,
       hover = true,
       colour = args.ref_table and args.ref_table.colour or args.colour, -- Cartomancer
-        akyrs_osk = args.akyrs_osk,
       one_press = args.one_press,
       button = (args.button ~= 'nil') and args.button or nil,
       choice = args.choice,
@@ -7211,7 +7094,6 @@ function UnBlind_create_UIBox_blind(type)
 	local text_table = loc_target
 	local blind_col = get_blind_main_colour(G.GAME.round_resets.blind_choices[type])
 	local blind_amt = get_blind_amount(G.GAME.round_resets.blind_ante)*blind_choice.config.mult*G.GAME.starting_params.ante_scaling
-	blind_amt = AKYRS.mod_blind_requirement(blind_choice.config,blind_amt)
 
 	local blind_state = G.GAME.round_resets.blind_states[type]
 	local _reward = true
@@ -7342,22 +7224,6 @@ function UnBlind_create_UIBox_blind_popup(blind, vars, blind_col)
 	 end
 	 local stake_sprite = get_stake_sprite(G.GAME.stake or 1, 0.4)
 	 blind_text[#blind_text + 1] =
-	 AKYRS.getBlindText(blind.key, true)[1] and
-	 {n=G.UIT.R, config={align = "cm", emboss = 0.05, r = 0.1, minw = 2.5, padding = 0.07, colour = G.C.WHITE}, nodes={
-	     {n=G.UIT.R, config={align = "cm", maxw = 2.4}, nodes={
-	         {n=G.UIT.T, config={text = AKYRS.getBlindText(blind.key, true)[1], scale = 0.35, colour = G.C.UI.TEXT_DARK}},
-	     }},
-	 {n=G.UIT.R, config={align = "cm"}, nodes={
-	     {n=G.UIT.O, config={object = stake_sprite}},
-	     AKYRS.mod_blind_display(blind) or
-	     {n=G.UIT.T, config={text = AKYRS.getBlindText(blind.key, true)[2], scale = 0.4, colour = G.C.RED}},
-	 }},
-	 {n=G.UIT.R, config={align = "cm"}, nodes={
-	     {n=G.UIT.T, config={text = localize('ph_blind_reward'), scale = 0.35, colour = G.C.UI.TEXT_DARK}},
-	     {n=G.UIT.O, config={object = DynaText({string = {_dollars and string.rep(localize('$'),_dollars) or '-'}, colours = {G.C.MONEY}, rotate = true, bump = true, silent = true, scale = 0.45})}},
-	 }},
-	 ability_text[1] and {n=G.UIT.R, config={align = "cm", padding = 0.08, colour = mix_colours(blind.boss_colour, G.C.GREY, 0.4), r = 0.1, emboss = 0.05, minw = 2.5, minh = 0.9}, nodes=ability_text} or nil
-	 }} or 
 		{n=G.UIT.R, config={align = "cm", colour = G.C.CLEAR}, nodes={
 			{n=G.UIT.R, config={align = "cm", emboss = 0.05, r = 0.1, minw = 2.5, padding = 0.07, colour = G.C.WHITE}, nodes={
 				{n=G.UIT.R, config={align = "cm", maxw = 2.4}, nodes={

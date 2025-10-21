@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1ed1517b3ee56d6858505fe9f6db13c92383944cf0650cfbefcc9733bfd475b7'
+LOVELY_INTEGRITY = '09b531210671e480688a9b381ef199025a714f0e0be9275faf20c04dd2f00258'
 
 --Updates all display information for all displays for a given screenmode. Returns the key for the resolution option cycle
 --
@@ -1343,24 +1343,6 @@ function set_consumeable_usage(card)
         G.GAME.consumeable_usage[card.config.center_key] = {count = 1, order = card.config.center.order, set = card.ability.set}
       end
       G.GAME.consumeable_usage_total = G.GAME.consumeable_usage_total or {tarot = 0, planet = 0, spectral = 0, tarot_planet = 0, all = 0}
-      G.GAME.consumeable_usage_total.akyrs_umbral = G.GAME.consumeable_usage_total.akyrs_umbral or 0
-      if card.config.center.set == 'Umbral' then 
-      G.GAME.consumeable_usage_total = G.GAME.consumeable_usage_total or {}
-      G.GAME.consumeable_usage_total.akyrs_umbral = (G.GAME.consumeable_usage_total.akyrs_umbral or 0) + 1
-      G.E_MANAGER:add_event(Event({
-              trigger = 'immediate',
-              func = function()
-              G.E_MANAGER:add_event(Event({
-              trigger = 'immediate',
-              func = function()
-              G.GAME.akyrs_last_umbral = card.config.center_key
-                      return true
-              end
-              }))
-              return true
-              end
-      }))
-      end
       if card.config.center.set == 'Tarot' then
         G.GAME.consumeable_usage_total.tarot = G.GAME.consumeable_usage_total.tarot + 1  
         G.GAME.consumeable_usage_total.tarot_planet = G.GAME.consumeable_usage_total.tarot_planet + 1
@@ -1709,14 +1691,6 @@ function loc_colour(_c, _default)
       for _, v in ipairs(SMODS.Suit.obj_buffer) do
           G.ARGS.LOC_COLOURS[v:lower()] = G.C.SUITS[v]
       end
-  G.ARGS.LOC_COLOURS.akyrs_playable = G.C.AKYRS_PLAYABLE
-  G.ARGS.LOC_COLOURS.akyrs_pissandshittium = G.C.AKYRS_PISSANDSHITTIUM
-  G.ARGS.LOC_COLOURS.akyrs_bocchi = G.C.AKYRS_BOCCHI
-  G.ARGS.LOC_COLOURS.akyrs_kita = G.C.AKYRS_KITA
-  G.ARGS.LOC_COLOURS.akyrs_nijika = G.C.AKYRS_NIJIKA
-  G.ARGS.LOC_COLOURS.akyrs_ryou = G.C.AKYRS_RYOU
-  G.ARGS.LOC_COLOURS.akyrs_umbral_p = G.C.AKYRS_UMBRAL_P
-  G.ARGS.LOC_COLOURS.akyrs_umbral_y = G.C.AKYRS_UMBRAL_Y
   return G.ARGS.LOC_COLOURS[_c] or _default or G.C.UI.TEXT_DARK
 end
 
@@ -1843,17 +1817,11 @@ end
 function loc_parse_string(line)
   local parsed_line = {}
   local control = {}
-  local is_escaping = false
   local _c, _c_name, _c_val, _c_gather = nil, nil, nil, nil
   local _s_gather, _s_ref = nil, nil
   local str_parts, str_it = {}, 1
   for i = 1, #line do
       local char = line:sub(i,i)
-      if char == '\\' then
-          is_escaping = true
-          goto akyrs_loc_escape_continue
-      end
-      if not is_escaping then
       if char == '{' then --Start of a control section, extract all controls
         if str_parts[1] then parsed_line[#parsed_line+1] = {strings = str_parts, control = control or {}} end
         str_parts, str_it = {}, 1
@@ -1870,11 +1838,6 @@ function loc_parse_string(line)
       elseif not _c and char == '#' and _s_gather then _s_gather = nil; if _s_ref then str_parts[str_it] = {_s_ref}; str_it = str_it + 1; _s_ref = nil end
       elseif not _c and _s_gather then _s_ref = (_s_ref or '')..char
       end
-      else
-          str_parts[str_it] = (str_parts[str_it] or '')..(char)
-          is_escaping = false
-      end
-      ::akyrs_loc_escape_continue::
       if i == #line then
         if str_parts[1] then parsed_line[#parsed_line+1] = {strings = str_parts, control = control or {}} end
         return parsed_line
@@ -1990,9 +1953,7 @@ function localize(args, misc_cat)
     args.AUT = args.AUT or {}
     args.AUT.box_colours = {}
     if (args.type == 'descriptions' or args.type == 'other') and type(loc_target.text) == 'table' and type(loc_target.text[1]) == 'table' then
-        if not args.is_info_queue then
-            args.AUT.multi_box = {} 
-        end
+        args.AUT.multi_box = args.AUT.multi_box or {} 
         for i, box in ipairs(loc_target.text_parsed) do
             for j, line in ipairs(box) do
                 local final_line = SMODS.localize_box(line, args)
@@ -2034,6 +1995,7 @@ function localize(args, misc_cat)
             object = DynaText({string = {assembled_string},
               colours = {(part.control.V and args.vars.colours[tonumber(part.control.V)]) or (part.control.C and loc_colour(part.control.C)) or args.text_colour or G.C.UI.TEXT_LIGHT},
               bump = not args.no_bump,
+              text_effect = SMODS.DynaTextEffects[part.control.E] and part.control.E,
               silent = not args.no_silent,
               pop_in = (not args.no_pop_in and (args.pop_in or 0)) or nil,
               pop_in_rate = (not args.no_pop_in and (args.pop_in_rate or 4)) or nil,
@@ -2048,10 +2010,13 @@ function localize(args, misc_cat)
           }}
         elseif part.control.E then
           local _float, _silent, _pop_in, _bump, _spacing = nil, true, nil, nil, nil
+          local text_effects
           if part.control.E == '1' then
             _float = true; _silent = true; _pop_in = 0
           elseif part.control.E == '2' then
             _bump = true; _spacing = 1
+            elseif SMODS.DynaTextEffects[part.control.E] then
+                text_effects = part.control.E
           end
           final_line[#final_line+1] = {n=G.UIT.C, config={align = "m", colour = part.control.B and args.vars.colours[tonumber(part.control.B)] or part.control.X and loc_colour(part.control.X) or nil, r = 0.05, padding = 0.03, res = 0.15}, nodes={}}
           final_line[#final_line].nodes[1] = {n=G.UIT.O, config={
@@ -2064,6 +2029,7 @@ function localize(args, misc_cat)
             spacing = _spacing,
             font = SMODS.Fonts[part.control.f] or G.FONTS[tonumber(part.control.f)],
             underline = part.control.u and loc_colour(part.control.u),
+            text_effect = text_effects,
             scale = 0.32*(part.control.s and tonumber(part.control.s) or args.scale  or 1)*desc_scale})
           }}
         elseif part.control.X or part.control.B then

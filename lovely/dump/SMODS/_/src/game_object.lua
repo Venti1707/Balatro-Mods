@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '1dc57308d5810f66ceb6fd595b9d982a08254395f4cdff61822e6bd5cfaa6e68'
+LOVELY_INTEGRITY = 'bd5efe425eae2e888f3cc3cc830bd67491b1a083135b1834e96a98e187aa3fb0'
 
 --- STEAMODDED CORE
 --- MODULE API
@@ -314,6 +314,34 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             self.FONT = assert(love.graphics.newFont(file_data, self.render_scale or G.TILESIZE),
                 ('Failed to initialize font data for Font %s'):format(self.key))
             
+        end,
+        process_loc_text = function() end,
+    }
+
+    -------------------------------------------------------------------------------------------------
+    ----- API CODE GameObject.DynaTextEffect
+    -------------------------------------------------------------------------------------------------
+    
+    SMODS.DynaTextEffects = {}
+    SMODS.DynaTextEffect = SMODS.GameObject:extend {
+        obj_table = SMODS.DynaTextEffects,
+        set = 'DynaTextEffects',
+        obj_buffer = {},
+        disable_mipmap = false,
+        required_params = {
+            'key',
+        },
+        func = function(dynatext, index, letter)
+        end,
+        register = function(self)
+            if self.registered then
+                sendWarnMessage(('Detected duplicate register call on object %s'):format(self.key), self.set)
+                return
+            end
+            self.name = self.key
+            SMODS.DynaTextEffect.super.register(self)
+        end,
+        inject = function(self)
         end,
         process_loc_text = function() end,
     }
@@ -1165,7 +1193,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 vars =
                     specific_vars or {}
             }
-            if target.vars.is_info_queue then target.is_info_queue = true; target.vars.is_info_queue = nil end
             local res = {}
             if self.loc_vars and type(self.loc_vars) == 'function' then
                 res = self:loc_vars(info_queue, card) or {}
@@ -1193,9 +1220,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
-            end
-            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
-            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
             end
             desc_nodes.background_colour = res.background_colour
         end
@@ -1409,7 +1433,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 AUT = full_UI_table,
                 vars = {}
             }
-            if target.vars.is_info_queue then target.is_info_queue = true; target.vars.is_info_queue = nil end
             local res = {}
             if self.loc_vars and type(self.loc_vars) == 'function' then
                 res = self:loc_vars(info_queue, card) or {}
@@ -1424,9 +1447,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 desc_nodes.name = localize{type = 'name_text', key = res.name_key or target.key, set = 'Other' }
             end
             localize(target)
-            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
-            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
-            end
             desc_nodes.background_colour = res.background_colour
         end,
         --[[
@@ -1814,7 +1834,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 AUT = full_UI_table,
                 vars = specific_vars or {},
             }
-            if target.vars.is_info_queue then target.is_info_queue = true; target.vars.is_info_queue = nil end
             local res = {}
             if self.loc_vars and type(self.loc_vars) == 'function' then
                 res = self:loc_vars(info_queue, card) or {}
@@ -1838,9 +1857,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             localize(target)
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
-            end
-            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
-            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
             end
             desc_nodes.background_colour = res.background_colour
         end,
@@ -2944,7 +2960,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
                 AUT = full_UI_table,
                 vars = specific_vars
             }
-            if target.vars.is_info_queue then target.is_info_queue = true; target.vars.is_info_queue = nil end
             local res = {}
             if self.loc_vars and type(self.loc_vars) == 'function' then
                 -- card is actually a `Tag` here
@@ -2966,9 +2981,6 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
             localize(target)
             if res.main_end then
                 desc_nodes[#desc_nodes + 1] = res.main_end
-            end
-            if card and AKYRS.is_in_pool(card,"Kessoku Band") then
-            	info_queue[#info_queue+1] = AKYRS.DescriptionDummies["dd_akyrs_kessoku_band"]
             end
             desc_nodes.background_colour = res.background_colour
         end
@@ -3708,6 +3720,7 @@ Set `prefix_config.key = false` on your object instead.]]):format(obj.key), obj.
     SMODS.Scoring_Parameter({
         key = 'mult',
         default_value = 0,
+        juice_on_update = true,
         colour = G.C.UI_MULT,
         calculation_keys = {'mult', 'h_mult', 'mult_mod','x_mult', 'Xmult', 'xmult', 'x_mult_mod', 'Xmult_mod'},
         calc_effect = function(self, effect, scored_card, key, amount, from_edition)

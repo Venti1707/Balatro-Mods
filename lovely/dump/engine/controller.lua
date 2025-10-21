@@ -1,4 +1,4 @@
-LOVELY_INTEGRITY = '780fcef50bf4936e6f941e9cba1e22c4c26dabca1b4c09bf682089654f1436df'
+LOVELY_INTEGRITY = 'c8c61312f915c2e19ddf51c63a34f36a8c48998c03ca977c957588868ce1ff44'
 
 ---@class Controller
 Controller = Object:extend()
@@ -340,7 +340,6 @@ function Controller:update(dt)
         --Now, handle the Cursor release
         --Was the Cursor release in the same location as the Cursor press and within Cursor timeout?
         if self.cursor_down.target then 
-        --print("the thing is "..AKYRS.check_type(self.cursor_down.target))
             if (not self.cursor_down.target.click_timeout or self.cursor_down.target.click_timeout*G.SPEEDFACTOR > self.cursor_up.time - self.cursor_down.time) then
                 if Vector_Dist(self.cursor_down.T, self.cursor_up.T) < G.MIN_CLICK_DIST then 
                     if self.cursor_down.target.states.click.can then
@@ -793,7 +792,7 @@ function Controller:key_press_update(key, dt)
             G.FUNCS.text_input_key{
                 e=self.text_input_hook,
                 key = key,
-                caps = AKYRS.shift_toggled or self.held_keys["lshift"] or self.held_keys["rshift"]
+                caps = self.held_keys["lshift"] or self.held_keys["rshift"]
             }
         end
         return
