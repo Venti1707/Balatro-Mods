@@ -40,7 +40,7 @@ function init_localization()
 	talismanloc()
 end
 
-Talisman = {config_file = {disable_anims = false, break_infinity = "omeganum", score_opt_id = 3}, mod_path = talisman_path}
+Talisman = {config_file = {disable_anims = false, break_infinity = "omeganum", score_opt_id = 2}, mod_path = talisman_path}
 if nativefs.read(talisman_path.."/config.lua") then
     Talisman.config_file = STR_UNPACK(nativefs.read(talisman_path.."/config.lua"))
     if Talisman.config_file.break_infinity == "bignumber" then
@@ -779,11 +779,13 @@ function Card:set_seal(a,b,immediate)
   return ss(self,a,b,Talisman.config_file.disable_anims and (Talisman.calculating_joker or Talisman.calculating_score or Talisman.calculating_card) or immediate)
 end
 
-function Card:get_chip_x_bonus()
-    if self.debuff then return 0 end
-    if self.ability.set == 'Joker' then return 0 end
-    if (SMODS.multiplicative_stacking(self.ability.x_chips or 1, self.ability.perma_x_chips or 0) or 0) <= 1 then return 0 end
-    return SMODS.multiplicative_stacking(self.ability.x_chips or 1, self.ability.perma_x_chips or 0)
+if not SMODS then
+  function Card:get_chip_x_bonus()
+      if self.debuff then return 0 end
+      if self.ability.set == 'Joker' then return 0 end
+      if (self.ability.x_chips or 0) <= 1 then return 0 end
+      return self.ability.x_chips
+  end
 end
 
 function Card:get_chip_e_bonus()
@@ -850,7 +852,7 @@ local edo = ease_dollars
 function ease_dollars(mod, instant)
   if Talisman.config_file.disable_anims then--and (Talisman.calculating_joker or Talisman.calculating_score or Talisman.calculating_card) then
     mod = mod or 0
-    if to_big(mod) < to_big(0) then inc_career_stat('c_dollars_earned', mod) end
+    if to_big(mod) > to_big(0) then inc_career_stat('c_dollars_earned', mod) end
     G.GAME.dollars = G.GAME.dollars + mod
     Talisman.dollar_update = true
   else return edo(mod, instant) end
@@ -935,9 +937,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^"..amount, colour =  G.C.EDITION, edition = true})
           elseif key ~= 'Echip_mod' then
               if effect.echip_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.echip_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.echip_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'e_chips', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'e_chips', amount, percent)
               end
           end
       end
@@ -958,9 +960,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^^"..amount, colour =  G.C.EDITION, edition = true})
           elseif key ~= 'EEchip_mod' then
               if effect.eechip_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eechip_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eechip_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'ee_chips', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'ee_chips', amount, percent)
               end
           end
       end
@@ -981,9 +983,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^^^"..amount, colour =  G.C.EDITION, edition = true})
           elseif key ~= 'EEEchip_mod' then
               if effect.eeechip_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eeechip_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eeechip_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'eee_chips', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'eee_chips', amount, percent)
               end
           end
       end
@@ -1004,9 +1006,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = (amount[1] > 5 and ('{' .. amount[1] .. '}') or string.rep('^', amount[1])) .. amount[2], colour =  G.C.EDITION, edition = true})
           elseif key ~= 'hyperchip_mod' then
               if effect.hyperchip_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.hyperchip_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.hyperchip_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'hyper_chips', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'hyper_chips', amount, percent)
               end
           end
       end
@@ -1027,9 +1029,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^"..amount.." "..localize("k_mult"), colour =  G.C.EDITION, edition = true})
           elseif key ~= 'Emult_mod' then
               if effect.emult_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.emult_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.emult_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'e_mult', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'e_mult', amount, percent)
               end
           end
       end
@@ -1050,9 +1052,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^^"..amount.." "..localize("k_mult"), colour =  G.C.EDITION, edition = true})
           elseif key ~= 'EEmult_mod' then
               if effect.eemult_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eemult_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eemult_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'ee_mult', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'ee_mult', amount, percent)
               end
           end
       end
@@ -1073,9 +1075,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = "^^^"..amount.." "..localize("k_mult"), colour =  G.C.EDITION, edition = true})
           elseif key ~= 'EEEmult_mod' then
               if effect.eeemult_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eeemult_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.eeemult_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'eee_mult', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'eee_mult', amount, percent)
               end
           end
       end
@@ -1096,9 +1098,9 @@ if SMODS and SMODS.calculate_individual_effect then
               card_eval_status_text(scored_card, 'jokers', nil, percent, nil, {message = ((amount[1] > 5 and ('{' .. amount[1] .. '}') or string.rep('^', amount[1])) .. amount[2]).." "..localize("k_mult"), colour =  G.C.EDITION, edition = true})
           elseif key ~= 'hypermult_mod' then
               if effect.hypermult_message then
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.hypermult_message)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'extra', nil, percent, nil, effect.hypermult_message)
               else
-                  card_eval_status_text(scored_card or effect.card or effect.focus, 'hyper_mult', amount, percent)
+                  card_eval_status_text(effect.message_card or effect.juice_card or scored_card or effect.card or effect.focus, 'hyper_mult', amount, percent)
               end
           end
       end
